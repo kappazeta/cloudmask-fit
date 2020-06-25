@@ -1,0 +1,13 @@
+name: cm_fit
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.5
+  - pip
+  - conda-forge::pandas
+  - conda-forge::scikit-learn
+  - netcdf4
+  - tensorflow-gpu
+  - matplotlib
+  - pytest
