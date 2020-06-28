@@ -7,6 +7,7 @@ dependencies:
   - pip
   - conda-forge::pandas
   - conda-forge::scikit-learn
+  - conda-forge::scikit-image
   - netcdf4
   - tensorflow-gpu
   - matplotlib

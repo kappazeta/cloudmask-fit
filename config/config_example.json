@@ -2,5 +2,21 @@
   "version": 1,
   "input": {
     "path_dir": "input/"
+  },
+  "split": {
+    "ratio": {
+      "test": 0.1,
+      "val": 0.1
+    }
+  },
+  "model": {
+    "architecture": "a1",
+    "features": ["AOT", "B01", "B02", "B03", "B04", "B05", "B06", "B08", "B8A", "B09", "B11", "B12", "WVP"],
+    "pixel_window_size": 9,
+    "batch_size": 4,
+    "num_epochs": 300
+  },
+  "predict": {
+    "batch_size": 100
   }
 }
