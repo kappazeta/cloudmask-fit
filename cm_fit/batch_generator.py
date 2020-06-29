@@ -23,6 +23,11 @@ import netCDF4 as nc
 class CMBGenerator(object):
     @staticmethod
     def shape(path_input):
+        """
+        Get the shape of a single band in an input data cube.
+        :param path_input: Path to the input file.
+        :return:  (width, height)
+        """
         fpath = path_input
         if os.path.isfile(fpath) and fpath.endswith('.nc'):
             with nc.Dataset(fpath, 'r') as root:
@@ -31,6 +36,13 @@ class CMBGenerator(object):
 
     @staticmethod
     def split(path_input_dir, ratio_val=0.1, ratio_test=0.1):
+        """
+        Read data cubes from an input directory, distribute these into samples for train, val, test datasets.
+        :param path_input_dir: Path to the input directory with data cubes.
+        :param ratio_val: Fraction of samples to reserve for the validation dataset.
+        :param ratio_test: Fraction of samples to reserve for the test dataset.
+        :return: {'total': total_number_of_samples, 'filepaths': list_of_filepaths, 'test': [(file_index, x_coord, y_coord), ], 'val': [(file_index, x_coord, y_coord), ], 'train': [(file_index, x_coord, y_coord), ]}
+        """
         # String arguments become bytes.
         if isinstance(path_input_dir, bytes):
             path_input_dir = path_input_dir.decode()
@@ -76,12 +88,25 @@ class CMBGenerator(object):
 
     @staticmethod
     def generator_train(dataset_splits, name_split, features, pixel_window_size, batch_size, num_epochs, num_classes):
+        """
+        Generate batches for training / validation.
+        :param dataset_splits: Pickled dictionary of splits.
+        :param name_split: Name of the split (either 'train' or 'val').
+        :param features: List of features (bands) to use from the data cube.
+        :param pixel_window_size: Size of a sample tile (centered on a labeled pixel) to train on.
+        :param batch_size: Number of samples per batch.
+        :param num_epochs: Number of epochs (full iterations with all batches).
+        :param num_classes: Number of output classes / categories.
+        :return: Yield (batch_x, batch_y), where batch_x is an input tensor, and batch_y the labeled output tensor.
+        """
         # Extent of the pixel window beyond the central pixel of the sample.
         hwin = (pixel_window_size - 1) >> 1
 
         # Convert from bytes back into strings.
-        name_split = name_split.decode()
-        features = [f.decode() for f in features]
+        if isinstance(name_split, bytes):
+            name_split = name_split.decode()
+        if isinstance(features[0], bytes):
+            features = [f.decode() for f in features]
 
         # Unpickle a dict of lists with strings and integers.
         dataset_splits = pickle.loads(dataset_splits)
@@ -99,7 +124,6 @@ class CMBGenerator(object):
 
                         coords = dataset_splits[name_split]
 
-                        samples_p = []
                         samples_x = []
                         samples_y = []
                         for file_index, x, y in coords:
@@ -122,16 +146,13 @@ class CMBGenerator(object):
                                 # Move features from the first axis to the last axis.
                                 sample = np.rollaxis(sample, 0, 3)
 
-                                samples_p.append((x, y))
                                 samples_x.append(sample)
                                 samples_y.append(np.identity(num_classes)[label])
 
                             if len(samples_x) == batch_size:
-                                batch_p = np.stack(samples_p)
                                 batch_x = np.stack(samples_x)
                                 batch_y = np.stack(samples_y)
 
-                                samples_p = []
                                 samples_x = []
                                 samples_y = []
 
@@ -139,6 +160,15 @@ class CMBGenerator(object):
 
     @staticmethod
     def generator_predict(path_input, features, pixel_window_size, batch_size):
+        """
+        Generate batches for prediction.
+        :param path_input: Path to a data cube to predict on.
+        :param features: List of features (bands) to use from the data cube.
+        :param pixel_window_size: Size of a sample tile (centered on a labeled pixel) to train on.
+        :param batch_size: Number of samples per batch.
+        :return: Yield (batch_p, batch_x, batch_y), where batch_p contains pixel coordinates, batch_x the input tensor,
+        and batch_y the labeled tensor (if the data cube contains any).
+        """
         # Extent of the pixel window beyond the central pixel of the sample.
         hwin = (pixel_window_size - 1) >> 1
 

@@ -20,12 +20,24 @@ from cm_fit.model.model import CMModel
 
 
 class CMMA1(CMModel):
+    """
+    A pixel-based architecture based on U-Net, for single pixel samples with symmetrical neighbourhood.
+
+    """
+
     def __init__(self):
         super(CMMA1, self).__init__("CMM.A1")
 
         self.pooling_size = (3, 3)
 
     def l_conv(self, filters, l_in, dropout=None):
+        """
+        A block of Conv2D layers with MaxPool2D.
+        :param filters: Number of filters for the Conv2D layers.
+        :param l_in: Input layer.
+        :param dropout: Dropout between the Conv2D and MaxPool2D layers. No dropout (None) by default.
+        :return: (last_layer_before_maxpool2d, maxpool2d_layer)
+        """
         l = tf.keras.layers.Conv2D(filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(l_in)
         l = tf.keras.layers.Conv2D(filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(l)
         if dropout:
@@ -33,6 +45,13 @@ class CMMA1(CMModel):
         return l, tf.keras.layers.MaxPool2D(pool_size=self.pooling_size)(l)
 
     def l_up(self, filters, l_in, l_c):
+        """
+        A block of UpSampling2D and Conv2D layers, combining with a previous layer.
+        :param filters: Number of filters for the Conv2D layers.
+        :param l_in: Input layer.
+        :param l_c: Previous layer to combine with.
+        :return: last_layer_in_block
+        """
         l = tf.keras.layers.UpSampling2D(self.pooling_size)(l_in)
         l = tf.keras.layers.Conv2D(filters, 2, activation='relu', padding='same', kernel_initializer='he_normal')(l)
         l = tf.keras.layers.concatenate([l_c, l], axis=3)
@@ -41,11 +60,17 @@ class CMMA1(CMModel):
 
         return l
 
-    def construct(self, width, height, num_channels, categories):
-        # Based on the U-Net architecture, but down-scaled for single pixel samples with symmetrical neighbourhood.
+    def construct(self, width, height, num_channels, num_categories):
+        """
+        Construct the model.
+        :param width: Width of a single sample (must be an odd number).
+        :param height: Height of a single sample (must be an odd number).
+        :param num_channels: Number of features used.
+        :param num_categories: Number of output classes.
+        """
         # For symmetrical neighbourhood, width and height must be odd numbers.
         self.input_shape = (width, height, num_channels)
-        self.output_shape = (categories,)
+        self.output_shape = (num_categories,)
 
         with tf.name_scope("Model"):
             l_in = tf.keras.layers.Input(self.input_shape, name='input')
@@ -61,8 +86,10 @@ class CMMA1(CMModel):
             l_c9 = self.l_up(32, l_c8, l_c1)
 
             l_c10 = tf.keras.layers.Conv2D(16, 3, activation='relu', padding='same', kernel_initializer='he_normal')(l_c9)
-            l_c10 = tf.keras.layers.Conv2D(categories, 1, activation='sigmoid')(l_c10)
+            l_c10 = tf.keras.layers.Conv2D(num_categories, 1, activation='sigmoid')(l_c10)
+
+            # Merge the results of neighbouring pixels into a single categorical array.
             l_out = tf.keras.layers.Flatten()(l_c10)
-            l_out = tf.keras.layers.Dense(categories, activation='sigmoid', name='output')(l_out)
+            l_out = tf.keras.layers.Dense(num_categories, activation='sigmoid', name='output')(l_out)
 
             self.model = tf.keras.Model(inputs=[l_in], outputs=[l_out])

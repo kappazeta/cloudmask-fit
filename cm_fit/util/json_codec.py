@@ -19,6 +19,10 @@ import numpy as np
 
 
 class CMFJSONEncoder(json.JSONEncoder):
+    """
+    JSON encoder with support for numpy data types.
+    """
+
     def default(self, obj):
         if isinstance(obj, np.int64):
             return int(obj)
