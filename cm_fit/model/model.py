@@ -60,7 +60,7 @@ class CMModel(log.Loggable):
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
-        self.model.compile(optimizer=l_op, loss='categorical_crossentropy', metrics=['accuracy', 'categorical_accuracy', 'categorical_crossentropy'])
+        self.model.compile(optimizer=l_op, loss='categorical_crossentropy', metrics=['accuracy'])
 
         self.model.summary()
 
@@ -85,7 +85,7 @@ class CMModel(log.Loggable):
         Set a path prefix for model training.
         :param prefix: Path prefix, should end with a filename prefix.
         """
-        self.path_checkpoint = prefix + '_{epoch:03d}-{' + self.monitored_metric + ':.2f}.hdf5'
+        self.path_checkpoint = prefix + '_{epoch:03d}-{val_accuracy:.2f}.hdf5'
 
     def set_num_samples(self, num_train_samples, num_val_samples):
         """
@@ -119,7 +119,7 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor=self.monitored_metric, patience=30)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="accuracy", patience=30)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
@@ -130,7 +130,7 @@ class CMModel(log.Loggable):
                 callbacks.append(model_checkpoint)
 
             lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor=self.monitored_metric, factor=0.5, patience=10, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0
+                monitor="accuracy", factor=0.5, patience=10, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
 

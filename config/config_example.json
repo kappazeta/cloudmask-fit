@@ -15,7 +15,7 @@
     "pixel_window_size": 9
   },
   "train": {
-    "learning_rate": 1E-6,
+    "learning_rate": 1E-4,
     "batch_size": 32,
     "num_epochs": 300
   },

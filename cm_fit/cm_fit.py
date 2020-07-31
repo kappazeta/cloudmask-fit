@@ -18,12 +18,13 @@ import os
 import json
 import pickle
 import numpy as np
+import netCDF4 as nc
 import skimage.io as skio
 import tensorflow as tf
 
 from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
-from cm_fit.model.architectures import CMMA1
+from cm_fit.model.architectures import ARCH_MAP
 from cm_fit.batch_generator import CMBGenerator
 
 
@@ -127,6 +128,39 @@ class CMFit(ulog.Loggable):
             self.batch_size_train, len(self.classes)
         ])
 
+    def save_to_nc(self, path, name, data):
+        """
+        Set a variable in a NetCDF file.
+        :param path: Path to the NetCDF file.
+        :param name: Name of the variable.
+        :param data: Data to set.
+        """
+        with nc.Dataset(path, 'w') as root:
+            dimensions = [
+                ("x", data.shape[0]),
+                ("y", data.shape[1]),
+                ("c", data.shape[2])
+            ]
+            dimension_names = [d[0] for d in dimensions]
+
+            for key, val in dimensions:
+                if key not in root.dimensions.keys():
+                    root.createDimension(key, val)
+
+            if name not in root.variables.keys():
+                variable = root.createVariable(name, "f4", dimensions=dimension_names, zlib=True, complevel=9, endian="little")
+            else:
+                variable = root[name]
+            variable[:, :, :] = data
+
+    def save_to_img(self, path, data):
+        """
+        Save a 2D array of uint8 values into an image.
+        :param path: Path to the image file.
+        :param data: The array to save.
+        """
+        skio.imsave(path, data)
+
     def split(self):
         """
         Read the files in self.path_input_dir, and split them according to self.split_ratio_val, self.split_ratio_test.
@@ -160,12 +194,19 @@ class CMFit(ulog.Loggable):
         with open(path_splits, "wt") as fo:
             json.dump(self.splits, fo, cls=CMFJSONEncoder, indent=4)
 
+    def get_model_by_name(self, name):
+        if self.model_arch in ARCH_MAP:
+            self.model = ARCH_MAP[name]()
+            return self.model
+        else:
+            raise ValueError(("Unsupported architecture \"{}\"."
+                              " Only the following architectures are supported: {}.").format(name, ARCH_MAP.keys()))
+
     def train(self):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
-        if self.model_arch == 'a1':
-            self.model = CMMA1()
+        self.get_model_by_name(self.model_arch)
 
         # Propagate configuration parameters.
         checkpoint_prefix = os.path.abspath("output/" + self.model_arch)
@@ -214,8 +255,7 @@ class CMFit(ulog.Loggable):
         :param path: Path to the input data cube.
         :param path_weights: Path to the model weights.
         """
-        if self.model_arch == 'a1':
-            self.model = CMMA1()
+        self.get_model_by_name(self.model_arch)
 
         # Propagate configuration parameters.
         self.model.set_batch_size(self.batch_size_predict)
@@ -229,21 +269,20 @@ class CMFit(ulog.Loggable):
 
         # Create an array for storing the segmentation mask.
         width, height = CMBGenerator.shape(path)
-        img = np.zeros((width, height), dtype=np.uint8)
+        probabilities = np.zeros((width, height, len(self.classes)), dtype=np.float)
+        class_mask = np.zeros((width, height), dtype=np.uint8)
 
         # Iterate over the dataset for prediction.
         for bp, bx, by in CMBGenerator.generator_predict(
                 path, self.features, self.pixel_window_size, self.batch_size_predict):
             preds = self.model.predict(bx)
 
-            # TODO:: Store the probabilities in a 3D array in NetCDF.
-
             # Update the segmentation mask.
             # TODO:: This is slow. Optimize it.
             for i in range(0, len(bp)):
-                p = tuple(bp[i])
-                img[p] = np.argmax(preds[i])
+                probabilities[bp[i][0], bp[i][1], :] = preds[i]
+                class_mask[bp[i][0], bp[i][1]] = np.argmax(preds[i])
 
         # Save the segmentation mask.
-        skio.imsave('output/prediction.png', img)
-
+        self.save_to_nc("output/prediction.nc", "probabilities", probabilities)
+        self.save_to_img("output/prediction.png", class_mask)

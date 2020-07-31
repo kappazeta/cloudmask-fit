@@ -22,7 +22,7 @@ from cm_fit.model.model import CMModel
 class CMMA1(CMModel):
     """
     A pixel-based architecture based on U-Net, for single pixel samples with symmetrical neighbourhood.
-
+    Better for larger neighbourhoods.
     """
 
     def __init__(self):
@@ -93,3 +93,46 @@ class CMMA1(CMModel):
             l_out = tf.keras.layers.Dense(num_categories, activation='sigmoid', name='output')(l_out)
 
             self.model = tf.keras.Model(inputs=[l_in], outputs=[l_out])
+
+
+class CMMA2(CMModel):
+    """
+    A simple pixel-based architecture for single pixel samples with symmetrical neighbourhood.
+    Better for smaller neighbourhoods.
+    """
+
+    def __init__(self):
+        super(CMMA2, self).__init__("CMM.A2")
+
+    def construct(self, width, height, num_channels, num_categories):
+        """
+        Construct the model.
+        :param width: Width of a single sample (must be an odd number).
+        :param height: Height of a single sample (must be an odd number).
+        :param num_channels: Number of features used.
+        :param num_categories: Number of output classes.
+        """
+        # For symmetrical neighbourhood, width and height must be odd numbers.
+        self.input_shape = (width, height, num_channels)
+        self.output_shape = (num_categories,)
+
+        with tf.name_scope("Model"):
+            l_in = tf.keras.layers.Input(self.input_shape, name='input')
+
+            l_c1 = tf.keras.layers.Conv2D(32, 3, activation='relu', padding='valid', kernel_initializer='he_normal')(l_in)
+            l_b1 = tf.keras.layers.BatchNormalization()(l_c1)
+            l_c2 = tf.keras.layers.Conv2D(64, 3, activation='relu', padding='valid', kernel_initializer='he_normal')(l_b1)
+            # l_b2 = tf.keras.layers.BatchNormalization()(l_c2)
+
+            # Merge the results of neighbouring pixels into a single categorical array.
+            l_f = tf.keras.layers.Flatten()(l_c2)
+            l_d1 = tf.keras.layers.Dense(32, activation='sigmoid')(l_f)
+            l_out = tf.keras.layers.Dense(num_categories, activation='sigmoid', name='output')(l_d1)
+
+            self.model = tf.keras.Model(inputs=[l_in], outputs=[l_out])
+
+
+ARCH_MAP = {
+    "a1": CMMA1,
+    "a2": CMMA2
+}
