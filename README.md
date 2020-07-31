@@ -1,6 +1,8 @@
 # cloudmask-fit
 Cloudmask training, prediction and evaluation of the results.
 
+Refer to [wiki](https://github.com/kappazeta/cloudmask-fit/wiki) for more detailed description of the workflow, model architectures and results.
+
 ## Setup
 1. Create a conda environment.
 
