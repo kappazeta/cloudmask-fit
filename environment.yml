@@ -9,6 +9,7 @@ dependencies:
   - conda-forge::scikit-learn
   - conda-forge::scikit-image
   - netcdf4
-  - tensorflow-gpu
   - matplotlib
   - pytest
+  - pip:
+    - tensorflow-gpu>=2.3.0
