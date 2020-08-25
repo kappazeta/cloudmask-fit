@@ -20,6 +20,7 @@ import argparse
 
 from cm_fit.util import log as ulog
 from cm_fit.cm_fit import CMFit
+from cm_fit.training.cm_initialize import CMInit
 
 
 def main():
@@ -38,6 +39,8 @@ def main():
                    help="Path for a log file, if desired.")
     p.add_argument("-v", "--verbosity", dest="verbosity", type=int, action="store", default=3,
                    help="Level of verbosity (1 - 3).")
+    p.add_argument("-dev", "--dev_mode", dest="dev_mode", default=False,
+                   help="Using other data_generator")
 
     args = p.parse_args()
 
@@ -49,14 +52,19 @@ def main():
             logfile=args.logfile_path
         )
 
-        cmf = CMFit()
-        cmf.load_config(args.path_config)
-
-        if args.predict is not None:
-            cmf.predict(args.predict, args.weights)
-        elif args.train:
+        if args.dev_mode:
+            cmf = CMInit()
+            cmf.load_config(args.path_config)
+            print("Development mode")
             cmf.split()
-            cmf.train()
+        else:
+            cmf = CMFit()
+            cmf.load_config(args.path_config)
+            if args.predict is not None:
+                cmf.predict(args.predict, args.weights)
+            elif args.train:
+                cmf.split()
+                cmf.train()
 
     except Exception as e:
         if log is not None:
