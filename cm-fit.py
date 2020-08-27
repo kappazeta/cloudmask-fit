@@ -57,6 +57,8 @@ def main():
             cmf.load_config(args.path_config)
             print("Development mode")
             cmf.split()
+            # Generators
+            cmf.train()
         else:
             cmf = CMFit()
             cmf.load_config(args.path_config)

@@ -9,7 +9,11 @@ import tensorflow as tf
 from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
 from cm_fit.model.architectures import ARCH_MAP
+from cm_fit.model.unet_original import Unet
 from cm_fit.data_loader.data_generator import DataGenerator
+from cm_fit.data_loader.utils import generate_splits
+from tensorflow.keras.utils import Sequence
+from keras.callbacks import ModelCheckpoint
 
 
 class CMInit(ulog.Loggable):
@@ -159,11 +163,7 @@ class CMInit(ulog.Loggable):
         Read the files in self.path_input_dir, and split them according to self.split_ratio_val, self.split_ratio_test.
         The results are written to output/splits.json.
         """
-        self.data_gen = DataGenerator(self.path_input_dir)
-        self.splits = self.data_gen.split(
-            ratio_val=self.split_ratio_val,
-            ratio_test=self.split_ratio_test
-        )
+        self.splits = generate_splits(self.path_input_dir, self.split_ratio_val, self.split_ratio_test)
 
         self.log.info(
             (
@@ -186,3 +186,68 @@ class CMInit(ulog.Loggable):
         path_splits = os.path.abspath("output/splits.json")
         with open(path_splits, "wt") as fo:
             json.dump(self.splits, fo, cls=CMFJSONEncoder, indent=4)
+
+    def train(self):
+        """
+        Fit a model to the training dataset (obtained from a splitting operation).
+        """
+        params = {'path_input': self.path_input_dir,
+                  'batch_size': self.batch_size_train,
+                  'features': self.features,
+                  'dim': (512, 512),
+                  'shuffle': True}
+        training_generator = DataGenerator(self.splits['train'], **params)
+        validation_generator = DataGenerator(self.splits['val'], **params)
+
+        # Design model
+        model = Unet()
+        model_checkpoint = ModelCheckpoint('unet_init.hdf5', monitor='loss', verbose=1, save_best_only=True)
+        data, label = training_generator.data_generate(self.splits['train'])
+        print(data.shape)
+        print(label.shape, label)
+        # Train model on dataset
+        model.fit_generator(training_generator,
+                            validation_data=validation_generator,
+                            epochs=3)
+
+        """self.get_model_by_name(self.model_arch)
+
+        # Propagate configuration parameters.
+        checkpoint_prefix = os.path.abspath("output/" + self.model_arch)
+        self.model.set_checkpoint_prefix(checkpoint_prefix)
+        self.model.set_num_epochs(self.num_epochs)
+        self.model.set_batch_size(self.batch_size_train)
+        self.model.set_learning_rate(self.learning_rate)
+
+        # Construct and compile the model.
+        self.model.construct(self.pixel_window_size, self.pixel_window_size, len(self.features), 5)
+        self.model.compile()
+
+        # Initialize the dataset for training.
+        args = [
+            pickle.dumps(self.splits), 'train',
+            self.features, self.pixel_window_size, self.batch_size_train, self.num_epochs, len(self.classes)
+        ]
+        dataset_train = tf.data.Dataset.from_generator(
+            DataGenerator.generator_train,
+            args=args,
+            output_types=(tf.float32, tf.float32),
+            output_shapes=(self.get_tensor_shape_x(), self.get_tensor_shape_y())
+        )
+
+        # Initialize the dataset for validation.
+        args = [
+            pickle.dumps(self.splits), 'val',
+            self.features, self.pixel_window_size, self.batch_size_train, self.num_epochs, len(self.classes)
+        ]
+        dataset_val = tf.data.Dataset.from_generator(
+            CMBGenerator.generator_train,
+            args=args,
+            output_types=(tf.float32, tf.float32),
+            output_shapes=(self.get_tensor_shape_x(), self.get_tensor_shape_y())
+        )
+
+        self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
+
+        # Fit the model, storing weights in output/.
+        self.model.fit(dataset_train, dataset_val)"""
