@@ -56,9 +56,11 @@ def main():
             cmf = CMInit()
             cmf.load_config(args.path_config)
             print("Development mode")
-            cmf.split()
-            # Generators
-            cmf.train()
+            if args.predict is not None:
+                cmf.predict(args.predict, args.weights)
+            elif args.train:
+                cmf.split()
+                cmf.train()
         else:
             cmf = CMFit()
             cmf.load_config(args.path_config)

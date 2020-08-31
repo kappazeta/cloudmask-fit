@@ -15,8 +15,10 @@
 # limitations under the License.
 
 import tensorflow as tf
+import numpy as np
 
 from cm_fit.util import log
+from cm_fit.model.unet_original import Unet
 
 
 class CMModel(log.Loggable):
@@ -29,13 +31,13 @@ class CMModel(log.Loggable):
 
         self.input_shape = (512, 512, 10)
         self.output_shape = (10,)
-        self.model = None
+        self.model = Unet(input_size=(512, 512, 13))
 
-        self.learning_rate = 1E-4
+        self.learning_rate = 0.001
         self.num_train_samples = 0
         self.num_val_samples = 0
         self.batch_size = 0
-        self.num_epochs = 300
+        self.num_epochs = 3
         
         self.monitored_metric = 'categorical_accuracy'
 
@@ -59,9 +61,8 @@ class CMModel(log.Loggable):
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-
         self.model.compile(optimizer=l_op, loss='categorical_crossentropy', metrics=['accuracy'])
-
+        print("new optimizer")
         self.model.summary()
 
         return self.model
@@ -140,8 +141,8 @@ class CMModel(log.Loggable):
         # TODO:: Duplicate a random number of samples, to fill batches.
 
         with tf.name_scope('Training'):
-            self.model.fit(
-                x=dataset_train, validation_data=dataset_val, callbacks=callbacks, epochs=self.num_epochs,
+            self.model.fit_generator(
+                dataset_train, validation_data=dataset_val, callbacks=callbacks, epochs=self.num_epochs,
                 steps_per_epoch=num_train_batches_per_epoch, validation_steps=num_val_batches_per_epoch
             )
 
@@ -151,6 +152,18 @@ class CMModel(log.Loggable):
         :param dataset_pred: Dataset (numpy ndarray or Tensorflow Dataset) to predict on.
         :return: Numpy array of class probabilities [[p_class1, p_class2, ...], [p_class1, p_class2, ...]].
         """
-        preds = self.model.predict(dataset_pred, self.batch_size)
+        preds = self.model.predict_generator(dataset_pred)
+
+        return preds
+
+    def predict_classes_gen(self, dataset_pred):
+        """
+        Predict on a dataset.
+        :param dataset_pred: Dataset (numpy ndarray or Tensorflow Dataset) to predict on.
+        :return: Numpy array of class probabilities [[p_class1, p_class2, ...], [p_class1, p_class2, ...]].
+        """
+        preds = self.model.predict_generator(dataset_pred)
+
+        preds = np.argmax(preds, axis=3)
 
         return preds

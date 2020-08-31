@@ -11,6 +11,5 @@ dependencies:
   - netcdf4
   - matplotlib
   - pytest
-  - pip:
-    - tensorflow-gpu>=2.3.0
-    - keras
+  - tensorflow-gpu
+  - keras

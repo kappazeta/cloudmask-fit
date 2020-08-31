@@ -38,11 +38,11 @@ class CMInit(ulog.Loggable):
             },
             "train": {
                 "learning_rate": 1E-4,
-                "batch_size": 256,
+                "batch_size": 16,
                 "num_epochs": 10
             },
             "predict": {
-                "batch_size": 256
+                "batch_size": 16
             }
         }
 
@@ -59,12 +59,21 @@ class CMInit(ulog.Loggable):
         self.features = []
 
         self.learning_rate = 1E-4
-        self.batch_size_train = 256
-        self.batch_size_predict = 256
-        self.num_epochs = 300
+        self.batch_size_train = 16
+        self.batch_size_predict = 16
+        self.num_epochs = 10
+        self.dim = (512, 512)
+        self.params = {'path_input': self.path_input_dir,
+                       'batch_size': self.batch_size_train,
+                       'features': self.features,
+                       'dim': self.dim,
+                       'num_classes': len(self.classes),
+                       'shuffle': True}
 
         self.model = None
         self.splits = {}
+        physical_devices = tf.config.experimental.list_physical_devices('GPU')
+        tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     def config_from_dict(self, d):
         """
@@ -183,71 +192,102 @@ class CMInit(ulog.Loggable):
             )
         )
 
-        path_splits = os.path.abspath("output/splits.json")
+        path_splits = os.path.abspath("output/model_v0/splits.json")
         with open(path_splits, "wt") as fo:
             json.dump(self.splits, fo, cls=CMFJSONEncoder, indent=4)
+
+    def get_model_by_name(self, name):
+        if self.model_arch in ARCH_MAP:
+            self.model = ARCH_MAP[name]()
+            return self.model
+        else:
+            raise ValueError(("Unsupported architecture \"{}\"."
+                              " Only the following architectures are supported: {}.").format(name, ARCH_MAP.keys()))
+
+    def save_masks_contrast(self, path_image, prediction, classification, saving_path):
+        path_image = path_image.rstrip()
+        filename_image = path_image.split('/')[-1].split(".")[0]
+        for i, label in enumerate(self.classes):
+            saving_filename = saving_path + filename_image + label
+            current_class = prediction[:, :, i]
+            #current_class[current_class >= 0.5] = 255
+            #current_class[current_class < 0.5] = 0
+            skio.imsave(saving_filename+".png", current_class)
+        classification *= 51
+        skio.imsave(saving_path + filename_image + ".png", classification)
+        print(filename_image)
+        return True
 
     def train(self):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
-        params = {'path_input': self.path_input_dir,
-                  'batch_size': self.batch_size_train,
-                  'features': self.features,
-                  'dim': (512, 512),
-                  'shuffle': True}
-        training_generator = DataGenerator(self.splits['train'], **params)
-        validation_generator = DataGenerator(self.splits['val'], **params)
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_train
 
-        # Design model
-        model = Unet()
-        model_checkpoint = ModelCheckpoint('unet_init.hdf5', monitor='loss', verbose=1, save_best_only=True)
-        data, label = training_generator.data_generate(self.splits['train'])
-        print(data.shape)
-        print(label.shape, label)
-        # Train model on dataset
-        model.fit_generator(training_generator,
-                            validation_data=validation_generator,
-                            epochs=3)
-
-        """self.get_model_by_name(self.model_arch)
-
+        training_generator = DataGenerator(self.splits['train'], **self.params)
+        validation_generator = DataGenerator(self.splits['val'], **self.params)
+        self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
-        checkpoint_prefix = os.path.abspath("output/" + self.model_arch)
+        checkpoint_prefix = os.path.abspath("checkpoints/model_v1/" + "unet_init_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
         self.model.set_batch_size(self.batch_size_train)
         self.model.set_learning_rate(self.learning_rate)
 
         # Construct and compile the model.
-        self.model.construct(self.pixel_window_size, self.pixel_window_size, len(self.features), 5)
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.model.summary()
         self.model.compile()
 
-        # Initialize the dataset for training.
-        args = [
-            pickle.dumps(self.splits), 'train',
-            self.features, self.pixel_window_size, self.batch_size_train, self.num_epochs, len(self.classes)
-        ]
-        dataset_train = tf.data.Dataset.from_generator(
-            DataGenerator.generator_train,
-            args=args,
-            output_types=(tf.float32, tf.float32),
-            output_shapes=(self.get_tensor_shape_x(), self.get_tensor_shape_y())
-        )
-
-        # Initialize the dataset for validation.
-        args = [
-            pickle.dumps(self.splits), 'val',
-            self.features, self.pixel_window_size, self.batch_size_train, self.num_epochs, len(self.classes)
-        ]
-        dataset_val = tf.data.Dataset.from_generator(
-            CMBGenerator.generator_train,
-            args=args,
-            output_types=(tf.float32, tf.float32),
-            output_shapes=(self.get_tensor_shape_x(), self.get_tensor_shape_y())
-        )
-
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
+        """std_list, mean_list, unique_list = training_generator.get_normal_par(self.splits['train'])
+        print("STD: ", std_list)
+        print("Mean: ", mean_list)"""
+        # Fit the model, storing weights in checkpoints/.
+        self.model.fit(training_generator, validation_generator)
 
-        # Fit the model, storing weights in output/.
-        self.model.fit(dataset_train, dataset_val)"""
+    def predict(self, path, path_weights):
+        """
+        Predict on a data cube, using model weights from a specific file.
+        Prediction results are stored in output/prediction.png.
+        :param path: Path to the input data cube.
+        :param path_weights: Path to the model weights.
+        """
+        self.get_model_by_name(self.model_arch)
+
+        # Propagate configuration parameters.
+        self.model.set_batch_size(self.batch_size_predict)
+
+        # Construct and compile the model.
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.compile()
+
+        # Load model weights.
+        self.model.load_weights(path_weights)
+
+        # Create an array for storing the segmentation mask.
+        probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
+        class_mask = np.zeros((self.dim[0], self.dim[1]), dtype=np.uint8)
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_predict
+        self.params["shuffle"] = False
+
+        # Read splits again
+        path_splits = os.path.abspath("output/model_v0/splits.json")
+        with open(path_splits, "r") as fo:
+            dictionary = json.load(fo)
+
+        valid_generator = DataGenerator(dictionary['val'], **self.params)
+
+        predictions = self.model.predict(valid_generator)
+
+        classes = self.model.predict_classes_gen(valid_generator)
+
+        print(predictions.shape)
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(dictionary['val'][i], prediction, classes[i], "output/model_v0/")
+
+        """self.save_to_nc("output/model_v0/prediction.nc", "probabilities", probabilities)
+        self.save_to_img("output/model_v0/prediction.png", class_mask)
+        self.save_to_img_contrast("output/model_v0/prediction_contrast.png", class_mask)"""
