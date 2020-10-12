@@ -21,6 +21,7 @@ from cm_fit.util import log
 from cm_fit.model.unet_original import Unet
 
 
+
 class CMModel(log.Loggable):
     """
     A generic model class to be subclassed by specific model architecture classes.
@@ -31,15 +32,17 @@ class CMModel(log.Loggable):
 
         self.input_shape = (512, 512, 10)
         self.output_shape = (10,)
-        self.model = Unet(input_size=(512, 512, 13))
+        self.model = Unet(input_size=(512, 512, 11))
 
         self.learning_rate = 0.001
         self.num_train_samples = 0
         self.num_val_samples = 0
         self.batch_size = 0
         self.num_epochs = 3
-        
-        self.monitored_metric = 'categorical_accuracy'
+
+        # Accuracy, precision, recall, f1, iou
+        self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy, "categorical_acc": tf.keras.metrics.CategoricalAccuracy(), "recall": tf.keras.metrics.Recall(), "precision": tf.keras.metrics.Precision(), "iou": tf.keras.metrics.MeanIoU(num_classes=4)}
+        self.monitored_metric = self.METRICS_SET["iou"]
 
         self.path_checkpoint = ''
 
@@ -61,7 +64,7 @@ class CMModel(log.Loggable):
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.model.compile(optimizer=l_op, loss='categorical_crossentropy', metrics=['accuracy'])
+        self.model.compile(optimizer=l_op, loss='categorical_crossentropy', metrics=[self.METRICS_SET["iou"], self.METRICS_SET["precision"], self.METRICS_SET["recall"], self.METRICS_SET["categorical_acc"]])
         print("new optimizer")
         self.model.summary()
 
@@ -86,7 +89,7 @@ class CMModel(log.Loggable):
         Set a path prefix for model training.
         :param prefix: Path prefix, should end with a filename prefix.
         """
-        self.path_checkpoint = prefix + '_{epoch:03d}-{val_accuracy:.2f}.hdf5'
+        self.path_checkpoint = prefix + '_{epoch:03d}-{val_loss:.2f}.hdf5'
 
     def set_num_samples(self, num_train_samples, num_val_samples):
         """
@@ -120,18 +123,18 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="accuracy", patience=30)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=30)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
                 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-                    self.path_checkpoint, monitor=self.monitored_metric,
+                    self.path_checkpoint, monitor="val_loss",
                     save_weights_only=True, mode='auto'
                 )
                 callbacks.append(model_checkpoint)
 
             lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="accuracy", factor=0.5, patience=10, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0
+                monitor="val_loss", factor=0.5, patience=10, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
 

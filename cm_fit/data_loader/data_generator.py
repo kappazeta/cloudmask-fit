@@ -10,8 +10,8 @@ class DataGenerator(keras.utils.Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, shuffle=True):
         """ Initialization """
         self.path = path_input
-        self.stds = [0.000295, 0.051612, 0.047504, 0.046648, 0.047029, 0.042860, 0.043512, 0.039830, 0.027523, 0.024688, 0.003356]
-        self.means = [0.001297, 0.037335, 0.037240, 0.036651, 0.042209, 0.049206, 0.054522, 0.053024, 0.041382, 0.032331, 0.012719]
+        self.stds = [0.00044, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.033, 0.025, 0.021, 0.0049]
+        self.means = [0.0010, 0.02, 0.02, 0.02, 0.025, 0.033, 0.038, 0.038, 0.03, 0.022, 0.01]
         self.list_indices = list_indices
         self.total_length = len(self.list_indices)
         self.batch_size = batch_size
@@ -37,6 +37,13 @@ class DataGenerator(keras.utils.Sequence):
         X, y = self.__data_generation(batch)
 
         return X, y
+
+    def set_std(self, stds):
+        self.stds = stds
+
+    def set_means(self, means):
+        self.means = means
+
 
     def on_epoch_end(self):
         """Updates indexes after each epoch"""
@@ -67,7 +74,7 @@ class DataGenerator(keras.utils.Sequence):
         unique_list = []
         X_reshaped = np.reshape(X, (len(list_indices_temp)*self.dim[0]*self.dim[1], len(self.features)))
         for j, class_curr in enumerate(self.features):
-            print(class_curr)
+            #print(class_curr)
             std_array = np.std(X_reshaped[:, j])
             mean_array = np.mean(X_reshaped[:, j])
             unique = np.unique(X_reshaped[:, j])
@@ -92,7 +99,6 @@ class DataGenerator(keras.utils.Sequence):
                     except:
                         print("Label for " + file + " not found")
                         print(data_bands[0].shape)
-                        y[i] = np.zeros_like(data_bands[0])
                     data_bands = np.stack(data_bands)
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
@@ -148,10 +154,13 @@ class TestDataGenerator(keras.utils.Sequence):
                     try:
                         label = np.asarray(root['Label'])
                         y[i] = label
+                        #data_bands = np.stack(data_bands)
+                        #data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
+                        #X[i,] = data_bands
                     except:
                         print("Label for " + file + " not found")
                         print(data_bands[0].shape)
-                        y[i] = np.zeros_like(data_bands[0])
+                        #y[i] = np.zeros_like(data_bands[0])
                     data_bands = np.stack(data_bands)
                     data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
                     X[i,] = data_bands

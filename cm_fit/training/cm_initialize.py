@@ -218,6 +218,27 @@ class CMInit(ulog.Loggable):
         print(filename_image)
         return True
 
+    def set_normalization(self, generator, split, sub_batch):
+        samples = len(split) // sub_batch
+        sum_std = []
+        sum_mean = []
+        for i in range(sub_batch):
+            curr_std, curr_mean_list, curr_unique_list = generator.get_normal_par(
+                split[i * samples:(i + 1) * samples])
+            sum_std.append(curr_std)
+            sum_mean.append(curr_mean_list)
+        sum_std = np.asarray(sum_std)
+        sum_mean = np.asarray(sum_mean)
+
+        final_std = np.sum(sum_std, axis=0)
+        final_std = final_std / sub_batch
+        final_mean = np.sum(sum_mean, axis=0)
+        final_mean = final_mean / sub_batch
+
+        generator.set_std(final_std.tolist())
+        generator.set_means(final_mean.tolist())
+        return final_std.tolist(), final_mean.tolist()
+
     def train(self):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
@@ -241,9 +262,10 @@ class CMInit(ulog.Loggable):
         self.model.compile()
 
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
-        """std_list, mean_list, unique_list = training_generator.get_normal_par(self.splits['train'])
-        print("STD: ", std_list)
-        print("Mean: ", mean_list)"""
+
+        train_std, train_means = self.set_normalization(training_generator, self.splits['train'], 5)
+        val_std, val_means = self.set_normalization(validation_generator, self.splits['val'], 1)
+
         # Fit the model, storing weights in checkpoints/.
         self.model.fit(training_generator, validation_generator)
 
@@ -274,7 +296,7 @@ class CMInit(ulog.Loggable):
         self.params["shuffle"] = False
 
         # Read splits again
-        path_splits = os.path.abspath("output/model_v0/splits.json")
+        path_splits = os.path.abspath("output/model_v1/splits.json")
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
@@ -286,8 +308,8 @@ class CMInit(ulog.Loggable):
 
         print(predictions.shape)
         for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['val'][i], prediction, classes[i], "output/model_v0/")
+            self.save_masks_contrast(dictionary['val'][i], prediction, classes[i], "output/model_v1/")
 
-        """self.save_to_nc("output/model_v0/prediction.nc", "probabilities", probabilities)
-        self.save_to_img("output/model_v0/prediction.png", class_mask)
-        self.save_to_img_contrast("output/model_v0/prediction_contrast.png", class_mask)"""
+        """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
+        self.save_to_img("output/model_v1/prediction.png", class_mask)
+        self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""

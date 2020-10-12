@@ -1,7 +1,7 @@
 {
   "version": 2,
   "input": {
-    "path_dir": "data/data_model_0/"
+    "path_dir": "data/data_model_1/"
   },
   "split": {
     "ratio": {
@@ -15,9 +15,9 @@
     "pixel_window_size": 9
   },
   "train": {
-    "learning_rate": 0.001,
+    "learning_rate": 0.0001,
     "batch_size": 1,
-    "num_epochs": 20
+    "num_epochs": 3
   },
   "predict": {
     "batch_size": 1
