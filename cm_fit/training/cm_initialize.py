@@ -192,7 +192,7 @@ class CMInit(ulog.Loggable):
             )
         )
 
-        path_splits = os.path.abspath("output/model_v0/splits.json")
+        path_splits = os.path.abspath("output/model_v1/splits.json")
         with open(path_splits, "wt") as fo:
             json.dump(self.splits, fo, cls=CMFJSONEncoder, indent=4)
 
@@ -267,7 +267,8 @@ class CMInit(ulog.Loggable):
         val_std, val_means = self.set_normalization(validation_generator, self.splits['val'], 1)
 
         # Fit the model, storing weights in checkpoints/.
-        self.model.fit(training_generator, validation_generator)
+        self.model.fit(training_generator,
+                       validation_generator)
 
     def predict(self, path, path_weights):
         """
