@@ -138,8 +138,8 @@ class CMModel(log.Loggable):
             )
             callbacks.append(lr_reducer)
 
-        num_train_batches_per_epoch = self.num_train_samples / self.batch_size
-        num_val_batches_per_epoch = self.num_val_samples / self.batch_size
+        num_train_batches_per_epoch = self.num_train_samples // self.batch_size
+        num_val_batches_per_epoch = self.num_val_samples // self.batch_size
 
         # TODO:: Duplicate a random number of samples, to fill batches.
 

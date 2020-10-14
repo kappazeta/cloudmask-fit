@@ -44,7 +44,6 @@ class DataGenerator(keras.utils.Sequence):
     def set_means(self, means):
         self.means = means
 
-
     def on_epoch_end(self):
         """Updates indexes after each epoch"""
         self.indexes = np.arange(len(self.list_indices))
