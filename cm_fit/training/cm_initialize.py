@@ -258,7 +258,7 @@ class CMInit(ulog.Loggable):
         validation_generator = DataGenerator(self.splits['val'], **self.params)
         self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
-        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "unet_init_")
+        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/unet_init_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
         self.model.set_batch_size(self.batch_size_train)
