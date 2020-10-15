@@ -62,6 +62,7 @@ class CMInit(ulog.Loggable):
         self.prediction_path = self.experiment_res_folder + "/prediction"
         self.validation_path = self.experiment_res_folder + "/validation"
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
+        self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
         self.pixel_window_size = 9
         self.features = []
 
@@ -237,7 +238,7 @@ class CMInit(ulog.Loggable):
         path_image = path_image.rstrip()
         filename_image = path_image.split('/')[-1].split(".")[0]
         for i, label in enumerate(self.classes):
-            saving_filename = saving_path + filename_image + label
+            saving_filename = saving_path + "/" + filename_image + label
             current_class = prediction[:, :, i]
             #current_class[current_class >= 0.5] = 255
             #current_class[current_class < 0.5] = 0
@@ -295,7 +296,7 @@ class CMInit(ulog.Loggable):
         self.model.compile()
 
         # Load model weights.
-        self.model.load_weights(path_weights)
+        self.model.load_weights(self.checkpoints_path+"/"+path_weights)
 
         # Create an array for storing the segmentation mask.
         probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
