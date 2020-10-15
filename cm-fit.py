@@ -27,9 +27,9 @@ def main():
     # Parse command-line arguments.
     p = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
-    p.add_argument("-t", "--train", action="store_true", dest="train", default=True,
+    p.add_argument("-T", "--train", action="store_true", dest="train", default=True,
                    help="Train a new model.")
-    p.add_argument("-p", "--predict", action="store", dest="predict", default=None,
+    p.add_argument("-P", "--predict", action="store", dest="predict", default=None,
                    help="Path to predict on.")
     p.add_argument("-w", "--weights", action="store", dest="weights", default=None,
                    help="Path to the model weights to use for prediction.")
@@ -39,8 +39,12 @@ def main():
                    help="Path for a log file, if desired.")
     p.add_argument("-v", "--verbosity", dest="verbosity", type=int, action="store", default=3,
                    help="Level of verbosity (1 - 3).")
-    p.add_argument("-dev", "--dev_mode", dest="dev_mode", default=False,
+    p.add_argument("-d", "--dev_mode", dest="dev_mode", default=False,
                    help="Using other data_generator")
+    p.add_argument("-V", "--validate", dest="validate", default=False,
+                   help="Validation running")
+    p.add_argument("-O", "--pred_path", dest="pred_path", default=False,
+                   help="Path to predicted images")
 
     args = p.parse_args()
 
@@ -58,6 +62,8 @@ def main():
             print("Development mode")
             if args.predict is not None:
                 cmf.predict(args.predict, args.weights)
+            elif args.validate:
+                cmf.validation(args.pred_path)
             elif args.train:
                 cmf.split()
                 cmf.train()

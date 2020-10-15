@@ -12,8 +12,10 @@ from cm_fit.model.architectures import ARCH_MAP
 from cm_fit.model.unet_original import Unet
 from cm_fit.data_loader.data_generator import DataGenerator
 from cm_fit.data_loader.utils import generate_splits
+from cm_fit.training.utils import set_normalization
 from tensorflow.keras.utils import Sequence
 from keras.callbacks import ModelCheckpoint
+from shutil import copyfile
 
 
 class CMInit(ulog.Loggable):
@@ -54,7 +56,12 @@ class CMInit(ulog.Loggable):
         self.split_ratio_val = 0.2
 
         self.model_arch = ""
-        self.path_input_dir = ""
+        self.path_data_dir = ""
+        self.experiment_name = ""
+        self.experiment_res_folder = "results"
+        self.prediction_path = self.experiment_res_folder + "/prediction"
+        self.validation_path = self.experiment_res_folder + "/validation"
+        self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.pixel_window_size = 9
         self.features = []
 
@@ -63,7 +70,7 @@ class CMInit(ulog.Loggable):
         self.batch_size_predict = 16
         self.num_epochs = 10
         self.dim = (512, 512)
-        self.params = {'path_input': self.path_input_dir,
+        self.params = {'path_input': self.path_data_dir,
                        'batch_size': self.batch_size_train,
                        'features': self.features,
                        'dim': self.dim,
@@ -80,9 +87,15 @@ class CMInit(ulog.Loggable):
         Load configuration from a dictionary.
         :param d: Dictionary with the configuration tree.
         """
-        self.path_input_dir = d["input"]["path_dir"]
-        if not os.path.isabs(self.path_input_dir):
-            self.path_input_dir = os.path.abspath(self.path_input_dir)
+        self.path_data_dir = d["input"]["data_dir"]
+        self.experiment_name = d["experiment_name"]
+        self.experiment_res_folder = "results/" + self.experiment_name
+        self.prediction_path = self.experiment_res_folder + "/prediction"
+        self.validation_path = self.experiment_res_folder + "/validation"
+        self.meta_data_path = self.experiment_res_folder + "/meta_data"
+        self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
+        if not os.path.isabs(self.path_data_dir):
+            self.path_data_dir = os.path.abspath(self.path_data_dir)
 
         self.split_ratio_test = d["split"]["ratio"]["test"]
         self.split_ratio_val = d["split"]["ratio"]["val"]
@@ -95,6 +108,21 @@ class CMInit(ulog.Loggable):
         self.batch_size_train = d["train"]["batch_size"]
         self.batch_size_predict = d["predict"]["batch_size"]
         self.num_epochs = d["train"]["num_epochs"]
+        self.create_folders()
+
+    def create_folders(self):
+        if not os.path.exists('results'):
+            os.mkdir('results')
+        if not os.path.exists(self.experiment_res_folder):
+            os.mkdir(self.experiment_res_folder)
+        if not os.path.exists(self.prediction_path):
+            os.mkdir(self.prediction_path)
+        if not os.path.exists(self.validation_path):
+            os.mkdir(self.validation_path)
+        if not os.path.exists(self.meta_data_path):
+            os.mkdir(self.meta_data_path)
+        if not os.path.exists(self.checkpoints_path):
+            os.mkdir(self.checkpoints_path)
 
     def load_config(self, path):
         """
@@ -106,6 +134,7 @@ class CMInit(ulog.Loggable):
             # TODO:: Validate config structure
 
             self.config_from_dict(self.cfg)
+            copyfile(path, self.meta_data_path+"/config.json")
 
     def get_tensor_shape_x(self):
         """
@@ -172,7 +201,7 @@ class CMInit(ulog.Loggable):
         Read the files in self.path_input_dir, and split them according to self.split_ratio_val, self.split_ratio_test.
         The results are written to output/splits.json.
         """
-        self.splits = generate_splits(self.path_input_dir, self.split_ratio_val, self.split_ratio_test)
+        self.splits = generate_splits(self.path_data_dir, self.split_ratio_val, self.split_ratio_test)
 
         self.log.info(
             (
@@ -192,7 +221,7 @@ class CMInit(ulog.Loggable):
             )
         )
 
-        path_splits = os.path.abspath("output/model_v1/splits.json")
+        path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "wt") as fo:
             json.dump(self.splits, fo, cls=CMFJSONEncoder, indent=4)
 
@@ -214,30 +243,9 @@ class CMInit(ulog.Loggable):
             #current_class[current_class < 0.5] = 0
             skio.imsave(saving_filename+".png", current_class)
         classification *= 51
-        skio.imsave(saving_path + filename_image + ".png", classification)
+        skio.imsave(saving_path + "/" + filename_image + ".png", classification)
         print(filename_image)
         return True
-
-    def set_normalization(self, generator, split, sub_batch):
-        samples = len(split) // sub_batch
-        sum_std = []
-        sum_mean = []
-        for i in range(sub_batch):
-            curr_std, curr_mean_list, curr_unique_list = generator.get_normal_par(
-                split[i * samples:(i + 1) * samples])
-            sum_std.append(curr_std)
-            sum_mean.append(curr_mean_list)
-        sum_std = np.asarray(sum_std)
-        sum_mean = np.asarray(sum_mean)
-
-        final_std = np.sum(sum_std, axis=0)
-        final_std = final_std / sub_batch
-        final_mean = np.sum(sum_mean, axis=0)
-        final_mean = final_mean / sub_batch
-
-        generator.set_std(final_std.tolist())
-        generator.set_means(final_mean.tolist())
-        return final_std.tolist(), final_mean.tolist()
 
     def train(self):
         """
@@ -250,7 +258,7 @@ class CMInit(ulog.Loggable):
         validation_generator = DataGenerator(self.splits['val'], **self.params)
         self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
-        checkpoint_prefix = os.path.abspath("checkpoints/model_v1/" + "unet_init_")
+        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "unet_init_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
         self.model.set_batch_size(self.batch_size_train)
@@ -263,8 +271,8 @@ class CMInit(ulog.Loggable):
 
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
-        train_std, train_means = self.set_normalization(training_generator, self.splits['train'], 5)
-        val_std, val_means = self.set_normalization(validation_generator, self.splits['val'], 1)
+        train_std, train_means = set_normalization(training_generator, self.splits['train'], 5)
+        val_std, val_means = set_normalization(validation_generator, self.splits['val'], 1)
 
         # Fit the model, storing weights in checkpoints/.
         self.model.fit(training_generator,
@@ -295,6 +303,32 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
+
+        # Read splits again
+        path_splits = os.path.abspath(self.meta_data_path+"/splits.json")
+        with open(path_splits, "r") as fo:
+            dictionary = json.load(fo)
+
+        valid_generator = DataGenerator(dictionary['val'], **self.params)
+
+        predictions = self.model.predict(valid_generator)
+
+        classes = self.model.predict_classes_gen(valid_generator)
+
+        print(predictions.shape)
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(dictionary['val'][i], prediction, classes[i], self.prediction_path)
+
+        """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
+        self.save_to_img("output/model_v1/prediction.png", class_mask)
+        self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
+
+    def validation(self, path_original, path_predicted):
+        """
+        Validate predicted data
+        :param path_original: Path to the input data cube.
+        :param path_predicted: Path to the model weights.
+        """
 
         # Read splits again
         path_splits = os.path.abspath("output/model_v1/splits.json")
