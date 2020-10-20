@@ -238,13 +238,15 @@ class CMInit(ulog.Loggable):
         path_image = path_image.rstrip()
         filename_image = path_image.split('/')[-1].split(".")[0]
         for i, label in enumerate(self.classes):
-            saving_filename = saving_path + "/" + filename_image + label
+            saving_filename = saving_path + "/" + filename_image + "/predict_" + label
             current_class = prediction[:, :, i]
             #current_class[current_class >= 0.5] = 255
             #current_class[current_class < 0.5] = 0
+            current_class *= 255
+            current_class = current_class.astype(np.uint8)
             skio.imsave(saving_filename+".png", current_class)
         classification *= 51
-        skio.imsave(saving_path + "/" + filename_image + ".png", classification)
+        skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
         print(filename_image)
         return True
 
@@ -272,8 +274,8 @@ class CMInit(ulog.Loggable):
 
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
-        train_std, train_means = set_normalization(training_generator, self.splits['train'], 5)
-        val_std, val_means = set_normalization(validation_generator, self.splits['val'], 1)
+        train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 5)
+        val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
 
         # Fit the model, storing weights in checkpoints/.
         self.model.fit(training_generator,
@@ -311,6 +313,8 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
+        val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
+        valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
 
         predictions = self.model.predict(valid_generator)
 
@@ -324,27 +328,21 @@ class CMInit(ulog.Loggable):
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
 
-    def validation(self, path_original, path_predicted):
+    def validation(self):
         """
         Validate predicted data
+        Create folder with substracted images
+        Output metrics
         :param path_original: Path to the input data cube.
         :param path_predicted: Path to the model weights.
         """
-
         # Read splits again
-        path_splits = os.path.abspath("output/model_v1/splits.json")
+        path_splits = os.path.abspath(self.meta_data_path+"/splits.json")
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
-
-        predictions = self.model.predict(valid_generator)
-
-        classes = self.model.predict_classes_gen(valid_generator)
-
-        print(predictions.shape)
-        for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['val'][i], prediction, classes[i], "output/model_v1/")
+        valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
 
         """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
         self.save_to_img("output/model_v1/prediction.png", class_mask)

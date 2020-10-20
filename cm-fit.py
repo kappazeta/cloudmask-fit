@@ -41,10 +41,8 @@ def main():
                    help="Level of verbosity (1 - 3).")
     p.add_argument("-d", "--dev_mode", dest="dev_mode", default=False,
                    help="Using other data_generator")
-    p.add_argument("-V", "--validate", dest="validate", default=False,
+    p.add_argument("-V", "--validate", dest="validate", action="store", default=None,
                    help="Validation running")
-    p.add_argument("-O", "--pred_path", dest="pred_path", default=False,
-                   help="Path to predicted images")
 
     args = p.parse_args()
 
@@ -63,7 +61,7 @@ def main():
             if args.predict is not None:
                 cmf.predict(args.predict, args.weights)
             elif args.validate:
-                cmf.validation(args.pred_path)
+                cmf.validation()
             elif args.train:
                 cmf.split()
                 cmf.train()

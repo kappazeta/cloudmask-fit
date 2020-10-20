@@ -3,7 +3,9 @@ import netCDF4 as nc
 import os
 import random
 import keras
+import skimage.io as skio
 from keras.utils import np_utils
+from PIL import Image
 
 
 class DataGenerator(keras.utils.Sequence):
@@ -12,6 +14,8 @@ class DataGenerator(keras.utils.Sequence):
         self.path = path_input
         self.stds = [0.00044, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.033, 0.025, 0.021, 0.0049]
         self.means = [0.0010, 0.02, 0.02, 0.02, 0.025, 0.033, 0.038, 0.038, 0.03, 0.022, 0.01]
+        self.min_v = []
+        self.max_v = []
         self.list_indices = list_indices
         self.total_length = len(self.list_indices)
         self.batch_size = batch_size
@@ -44,11 +48,66 @@ class DataGenerator(keras.utils.Sequence):
     def set_means(self, means):
         self.means = means
 
+    def set_min(self, min_v):
+        self.min_v = min_v
+
+    def set_max(self, max_v):
+        self.max_v = max_v
+
     def on_epoch_end(self):
         """Updates indexes after each epoch"""
         self.indexes = np.arange(len(self.list_indices))
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
+
+    def get_labels(self, list_indices_temp, path_prediction, path_val, classes):
+        """Save labels to folder"""
+        for i, file in enumerate(list_indices_temp):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    y = np.empty((self.dim[0], self.dim[1], self.num_classes), dtype=int)
+                    data_bands = [(np.asarray(root[f]) - self.means[i+1])/self.stds[i+1]
+                                  for i, f in enumerate(["B04", "B03", "B02"])]
+
+                    #data_bands = [(np.asarray(root[f]) - self.min_v[i + 1]) / (self.max_v[i + 1]-self.min_v[i + 1])
+                    #              for i, f in enumerate(["B02", "B03", "B04"])]
+                    data_bands = np.stack(data_bands)
+                    # data_bands /= np.max(np.abs(data_bands), axis=0)
+                    data_bands = (data_bands-np.min(data_bands))/\
+                                 (np.max(data_bands)-np.min(data_bands))
+                    data_bands *= 255.0
+                    #data_bands *= (255.0/(np.max(np.abs(data_bands))))
+                    data_bands = np.rollaxis(data_bands, 0, 3)
+                    try:
+                        label = np.asarray(root['Label'])
+                        y = np_utils.to_categorical(label, self.num_classes)
+                    except:
+                        print("Label for " + file + " not found")
+                        print(data_bands[0].shape)
+                    #img = Image.fromarray(data_bands, 'RGB')
+                    file_name = file.split(".")[0].split("/")[-1]
+                    #img.save(path_prediction+"/"+file_name+"orig.png")
+
+                    if not os.path.exists(path_prediction+"/"+file_name):
+                        os.mkdir(path_prediction+"/"+file_name)
+                    if not os.path.exists(path_val+"/"+file_name):
+                        os.mkdir(path_val+"/"+file_name)
+
+                    #Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
+                    unique_before = np.unique(data_bands)
+                    #data_bands *= 255
+                    data_bands = data_bands.astype(np.uint8)
+                    skio.imsave(path_prediction + "/" + file_name + "/orig.png", data_bands)
+
+                    label *= 51
+                    label = label.astype(np.uint8)
+                    skio.imsave(path_val+"/"+file_name + "/label.png", label)
+                    for j, curr_cl in enumerate(classes):
+                        saving_filename = path_prediction+"/"+file_name+"/"+curr_cl
+                        curr_array = y[:,:,j].copy()
+                        curr_array *= 255
+                        curr_array = curr_array.astype(np.uint8)
+                        skio.imsave(saving_filename + ".png", curr_array)
 
     def get_normal_par(self, list_indices_temp):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
@@ -71,17 +130,23 @@ class DataGenerator(keras.utils.Sequence):
         stds_list = []
         means_list = []
         unique_list = []
+        min_list = []
+        max_list = []
         X_reshaped = np.reshape(X, (len(list_indices_temp)*self.dim[0]*self.dim[1], len(self.features)))
         for j, class_curr in enumerate(self.features):
             #print(class_curr)
             std_array = np.std(X_reshaped[:, j])
             mean_array = np.mean(X_reshaped[:, j])
             unique = np.unique(X_reshaped[:, j])
+            min_ar = np.min(X_reshaped[:, j])
+            max_ar = np.max(X_reshaped[:, j])
             stds_list.append(std_array)
             means_list.append(mean_array)
             unique_list.append(unique)
+            min_list.append(min_ar)
+            max_list.append(max_ar)
 
-        return stds_list, means_list, unique_list
+        return stds_list, means_list, unique_list, min_list, max_list
 
     def __data_generation(self, list_indices_temp):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
@@ -94,6 +159,8 @@ class DataGenerator(keras.utils.Sequence):
                     data_bands = [(np.asarray(root[f]) - self.means[i])/self.stds[i] for i, f in enumerate(self.features)]
                     try:
                         label = np.asarray(root['Label'])
+                        unique_lbl = np.unique(label)
+
                         y[i] = np_utils.to_categorical(label, self.num_classes)
                     except:
                         print("Label for " + file + " not found")
