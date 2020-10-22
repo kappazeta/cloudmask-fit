@@ -13,6 +13,7 @@ from cm_fit.model.unet_original import Unet
 from cm_fit.data_loader.data_generator import DataGenerator
 from cm_fit.data_loader.utils import generate_splits
 from cm_fit.training.utils import set_normalization
+from cm_fit.plot.train_history import draw_history_plots
 from tensorflow.keras.utils import Sequence
 from keras.callbacks import ModelCheckpoint
 from shutil import copyfile
@@ -278,8 +279,9 @@ class CMInit(ulog.Loggable):
         val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
 
         # Fit the model, storing weights in checkpoints/.
-        self.model.fit(training_generator,
-                       validation_generator)
+        history = self.model.fit(training_generator,
+                                 validation_generator)
+        draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
     def predict(self, path, path_weights):
         """

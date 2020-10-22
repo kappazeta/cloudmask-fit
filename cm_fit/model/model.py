@@ -144,10 +144,11 @@ class CMModel(log.Loggable):
         # TODO:: Duplicate a random number of samples, to fill batches.
 
         with tf.name_scope('Training'):
-            self.model.fit_generator(
+            history = self.model.fit_generator(
                 dataset_train, validation_data=dataset_val, callbacks=callbacks, epochs=self.num_epochs,
                 steps_per_epoch=num_train_batches_per_epoch, validation_steps=num_val_batches_per_epoch
             )
+        return history
 
     def predict(self, dataset_pred):
         """
