@@ -5,6 +5,7 @@ import numpy as np
 import netCDF4 as nc
 import skimage.io as skio
 import tensorflow as tf
+from PIL import Image
 
 from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
@@ -246,8 +247,11 @@ class CMInit(ulog.Loggable):
             current_class *= 255
             current_class = current_class.astype(np.uint8)
             skio.imsave(saving_filename+".png", current_class)
-        classification *= 51
-        skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+        classification = classification*63 + 3
+        classification = classification.astype(np.uint8)
+        #skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+        im = Image.fromarray(classification)
+        im.save(saving_path + "/" + filename_image + "/prediction.png")
         print(filename_image)
         return True
 
