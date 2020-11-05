@@ -19,6 +19,7 @@ import numpy as np
 
 from cm_fit.util import log
 from cm_fit.model.unet_original import Unet
+from tensorflow.keras import backend as K
 
 
 
@@ -41,7 +42,9 @@ class CMModel(log.Loggable):
         self.num_epochs = 3
 
         # Accuracy, precision, recall, f1, iou
-        self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy, "categorical_acc": tf.keras.metrics.CategoricalAccuracy(), "recall": tf.keras.metrics.Recall(), "precision": tf.keras.metrics.Precision(), "iou": tf.keras.metrics.MeanIoU(num_classes=4)}
+        self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy, "categorical_acc": tf.keras.metrics.CategoricalAccuracy(),
+                            "recall": tf.keras.metrics.Recall(), "precision": tf.keras.metrics.Precision(),
+                            "iou": tf.keras.metrics.MeanIoU(num_classes=5), 'f1': self.custom_f1}
         self.monitored_metric = self.METRICS_SET["iou"]
 
         self.path_checkpoint = ''
@@ -64,7 +67,9 @@ class CMModel(log.Loggable):
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.model.compile(optimizer=l_op, loss='categorical_crossentropy', metrics=[self.METRICS_SET["iou"], self.METRICS_SET["precision"], self.METRICS_SET["recall"], self.METRICS_SET["categorical_acc"]])
+        self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+                           metrics=[self.METRICS_SET["iou"], self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+                                    self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
         print("new optimizer")
         self.model.summary()
 
@@ -113,6 +118,30 @@ class CMModel(log.Loggable):
         :param num_epochs: Number of epochs.
         """
         self.num_epochs = num_epochs
+
+    @staticmethod
+    def custom_f1(y_true, y_pred):
+        def recall_m(y_true, y_pred):
+            TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            Positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+
+            recall = TP / (Positives + K.epsilon())
+            return recall
+
+        def precision_m(y_true, y_pred):
+            TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            Pred_Positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+
+            precision = TP / (Pred_Positives + K.epsilon())
+            return precision
+
+        precision, recall = precision_m(y_true, y_pred), recall_m(y_true, y_pred)
+
+        f1 = 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+        weighted_f1 = f1 * K.sum(K.round(K.clip(y_true, 0, 1))) / K.sum(K.round(K.clip(y_true, 0, 1)))
+        weighted_f1 = K.sum(weighted_f1)
+
+        return f1
 
     def fit(self, dataset_train, dataset_val):
         """
