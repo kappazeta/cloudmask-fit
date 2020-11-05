@@ -123,18 +123,18 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=30)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_mean_io_u", mode='max', patience=30)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
                 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-                    self.path_checkpoint, monitor="val_loss",
-                    save_weights_only=True, mode='auto'
+                    self.path_checkpoint, monitor="val_mean_io_u",
+                    save_weights_only=True, mode='max'
                 )
                 callbacks.append(model_checkpoint)
 
             lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_loss", factor=0.5, patience=10, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0
+                monitor="val_mean_io_u", factor=0.5, patience=10, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
 
