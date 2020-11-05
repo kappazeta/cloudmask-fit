@@ -7,6 +7,7 @@ def draw_history_plots(history, experiment_name, results_folder):
     graph_folder = results_folder + "/plots"
     if not os.path.exists(graph_folder):
         os.mkdir(graph_folder)
+
     # Loss plot
     plt.figure()
     plt.plot(history.history['loss'])
@@ -225,3 +226,46 @@ def draw_history_plots(history, experiment_name, results_folder):
 
     fig = go.Figure(data=data, layout=layout)
     fig.write_html(graph_folder + "/recall.html")
+
+    # Recall
+    plt.plot(history.history['custom_f1'])
+    plt.plot(history.history['val_custom_f1'])
+    plt.title(experiment_name + ' model coefficient')
+    plt.ylabel('dice coefficient')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(graph_folder + "/f1.png")
+
+    layout = go.Layout(
+        title=experiment_name + ' model dice coefficient',
+        plot_bgcolor="#FFFFFF",
+        hovermode="x",
+        hoverdistance=100,  # Distance to show hover label of data point
+        spikedistance=1000,  # Distance to show spike
+        xaxis=dict(
+            title="epoch",
+            linecolor="#BCCCDC",
+            showspikes=True,  # Show spike line for X-axis
+            # Format spike
+            spikethickness=2,
+            spikedash="dot",
+            spikecolor="#999999",
+            spikemode="across",
+        ),
+        yaxis=dict(
+            title="coefficient",
+            linecolor="#BCCCDC"
+        )
+    )
+
+    data = []
+    for line in ['custom_f1', 'val_custom_f1']:
+        loss = history.history[line]
+        line_chart = go.Scatter(
+            y=loss,
+            name=line
+        )
+        data.append(line_chart)
+
+    fig = go.Figure(data=data, layout=layout)
+    fig.write_html(graph_folder + "/f1.html")
