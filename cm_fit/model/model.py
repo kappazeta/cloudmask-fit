@@ -20,7 +20,7 @@ import numpy as np
 from cm_fit.util import log
 from cm_fit.model.unet_original import Unet
 from tensorflow.keras import backend as K
-
+from sklearn.metrics import confusion_matrix, multilabel_confusion_matrix
 
 
 class CMModel(log.Loggable):
@@ -143,6 +143,14 @@ class CMModel(log.Loggable):
 
         return f1
 
+    @staticmethod
+    def get_confusion_matrix(y_true, y_pred, classes):
+        cm = confusion_matrix(y_true, y_pred)
+        cm_multi = multilabel_confusion_matrix(y_true, y_pred, labels=[0, 1, 2, 3, 4])
+        cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm_multi_norm = cm_multi.astype('float') / cm_multi.sum(axis=2)[:, :, np.newaxis]
+        return cm, cm_normalized, cm_multi, cm_multi_norm
+
     def fit(self, dataset_train, dataset_val):
         """
         Train the model, producing model weights files as specified by the checkpoint path.
@@ -152,18 +160,18 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_mean_io_u", mode='max', patience=30)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_custom_f1", mode='max', patience=30)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
                 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-                    self.path_checkpoint, monitor="val_mean_io_u",
+                    self.path_checkpoint, monitor="val_custom_f1",
                     save_weights_only=True, mode='max'
                 )
                 callbacks.append(model_checkpoint)
 
             lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_mean_io_u", factor=0.5, patience=10, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
+                monitor="val_custom_f1", factor=0.5, patience=10, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
 

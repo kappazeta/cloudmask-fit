@@ -7,6 +7,10 @@ import skimage.io as skio
 import tensorflow as tf
 from PIL import Image
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
 from cm_fit.model.architectures import ARCH_MAP
@@ -18,6 +22,7 @@ from cm_fit.plot.train_history import draw_history_plots
 from tensorflow.keras.utils import Sequence
 from keras.callbacks import ModelCheckpoint
 from shutil import copyfile
+from cm_fit.plot.train_history import plot_confusion_matrix
 
 
 class CMInit(ulog.Loggable):
@@ -65,6 +70,7 @@ class CMInit(ulog.Loggable):
         self.validation_path = self.experiment_res_folder + "/validation"
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
+        self.plots_path = self.experiment_res_folder + "/plots"
         self.pixel_window_size = 9
         self.features = []
 
@@ -97,6 +103,7 @@ class CMInit(ulog.Loggable):
         self.validation_path = self.experiment_res_folder + "/validation"
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
+        self.plots_path = self.experiment_res_folder + "/plots"
         if not os.path.isabs(self.path_data_dir):
             self.path_data_dir = os.path.abspath(self.path_data_dir)
 
@@ -126,6 +133,8 @@ class CMInit(ulog.Loggable):
             os.mkdir(self.meta_data_path)
         if not os.path.exists(self.checkpoints_path):
             os.mkdir(self.checkpoints_path)
+        if not os.path.exists(self.plots_path):
+            os.mkdir(self.plots_path)
 
     def load_config(self, path):
         """
@@ -319,10 +328,26 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
-        val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
-        valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
+        #val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
+        #valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
 
         predictions = self.model.predict(valid_generator)
+        y_pred = np.argmax(predictions, axis=3)
+        classes = valid_generator.get_classes()
+        y_true = np.argmax(classes, axis=3)
+
+        y_pred = y_pred.flatten()
+        y_true = y_true.flatten()
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true, y_pred, self.classes)
+        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
+        plt.close()
+
+        for i, matrix in enumerate(cm_multi_norm):
+            plt.figure()
+            plot_confusion_matrix(matrix, ["Other", self.classes[i]], self.experiment_name + ": cf_matrix "+self.classes[i], normalized=True)
+            plt.savefig(os.path.join(self.plots_path, 'cf_matrix_'+self.classes[i]+'.png'))
+            plt.close()
 
         classes = self.model.predict_classes_gen(valid_generator)
 
@@ -349,6 +374,7 @@ class CMInit(ulog.Loggable):
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
         valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
+        predictions = self.model.predict(valid_generator)
 
         """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
         self.save_to_img("output/model_v1/prediction.png", class_mask)

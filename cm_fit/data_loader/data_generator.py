@@ -6,9 +6,10 @@ import keras
 import skimage.io as skio
 from keras.utils import np_utils
 from PIL import Image
+from tensorflow.python.keras.utils.data_utils import Sequence
 
 
-class DataGenerator(keras.utils.Sequence):
+class DataGenerator(Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, shuffle=True):
         """ Initialization """
         self.path = path_input
@@ -163,6 +164,7 @@ class DataGenerator(keras.utils.Sequence):
             min_list.append(min_ar)
             max_list.append(max_ar)
 
+
         return stds_list, means_list, unique_list, min_list, max_list
 
     def __data_generation(self, list_indices_temp):
@@ -188,6 +190,19 @@ class DataGenerator(keras.utils.Sequence):
                     X[i,] = data_bands
 
         return X, y
+
+    def get_classes(self):
+        y = np.empty((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=int)
+        # Initialization
+        for i, file in enumerate(self.list_indices):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        label = np.asarray(root['Label'])
+                        y[i] = np_utils.to_categorical(label, self.num_classes)
+                    except:
+                        print("Label for " + file + " not found")
+        return y
 
 
 class TestDataGenerator(keras.utils.Sequence):

@@ -1,6 +1,48 @@
 import matplotlib.pyplot as plt
 import os
 import plotly.graph_objects as go
+import numpy as np
+
+
+def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalized=True`.
+
+    Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
+    """
+    fig, ax = plt.subplots(figsize=(20, 20))
+    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    # We want to show all ticks...
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           # ... and label them with the respective list entries
+           xticklabels=class_list, yticklabels=class_list,
+            )
+    plt.xlabel('Predicted label', fontsize=20)
+    plt.ylabel('True label', fontsize=20)
+    ax.set_title(title, pad=30, fontsize=25)
+
+    # Turn spines off.
+    for edge, spine in ax.spines.items():
+        spine.set_visible(False)
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor", fontsize=20)
+    plt.setp(ax.get_yticklabels(), fontsize=20)
+
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f' if normalized else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh or cm[i, j] < 0.01 else "black", fontsize=15
+                    )
+    fig.tight_layout()
+    return ax
 
 
 def draw_history_plots(history, experiment_name, results_folder):
