@@ -328,8 +328,8 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
-        #val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
-        #valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
+        val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
+        valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
 
         predictions = self.model.predict(valid_generator)
         y_pred = np.argmax(predictions, axis=3)

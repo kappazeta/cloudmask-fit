@@ -42,7 +42,7 @@ class CMModel(log.Loggable):
         self.num_epochs = 3
 
         # Accuracy, precision, recall, f1, iou
-        self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy, "categorical_acc": tf.keras.metrics.CategoricalAccuracy(),
+        self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy(), "categorical_acc": tf.keras.metrics.CategoricalAccuracy(),
                             "recall": tf.keras.metrics.Recall(), "precision": tf.keras.metrics.Precision(),
                             "iou": tf.keras.metrics.MeanIoU(num_classes=5), 'f1': self.custom_f1}
         self.monitored_metric = self.METRICS_SET["iou"]
@@ -67,7 +67,7 @@ class CMModel(log.Loggable):
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+        self.model.compile(optimizer=l_op, loss=self.dice_loss, #'categorical_crossentropy',
                            metrics=[self.METRICS_SET["iou"], self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                     self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
         print("new optimizer")
@@ -142,6 +142,18 @@ class CMModel(log.Loggable):
         weighted_f1 = K.sum(weighted_f1)
 
         return f1
+
+    @staticmethod
+    def dice_loss(y_true, y_pred):
+        def dice_coef(y_true, y_pred, smooth=1):
+            """
+            Dice = (2*|X & Y|)/ (|X|+ |Y|)
+                 =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+            ref: https://arxiv.org/pdf/1606.04797v1.pdf
+            """
+            intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+            return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
+        return 1 - dice_coef(y_true, y_pred)
 
     @staticmethod
     def get_confusion_matrix(y_true, y_pred, classes):
