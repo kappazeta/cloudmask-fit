@@ -61,6 +61,30 @@ class DataGenerator(Sequence):
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
 
+    def get_label_stat(self, list_indices_temp, classes):
+        overall_stat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+        per_image_stat = []
+        for i, file in enumerate(list_indices_temp):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        label = np.asarray(root['Label'])
+                        unique_elements, counts_elements = np.unique(label, return_counts=True)
+                        curr_dic = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+                        for j in range(len(unique_elements)):
+                            overall_stat[unique_elements[j]] += counts_elements[j]
+                            curr_dic[j] += counts_elements[j]
+                        curr_dic = {k: v / sum(curr_dic.values()) for k, v in curr_dic.items()}
+                        per_image_stat.append(curr_dic)
+                    except:
+                        print("Label for " + file + " not found")
+                    # img = Image.fromarray(data_bands, 'RGB')
+                    file_name = file.split(".")[0].split("/")[-1]
+                    # img.save(path_prediction+"/"+file_name+"orig.png")
+
+        overall_stat = {k: v / sum(overall_stat.values()) for k, v in overall_stat.items()}
+        return overall_stat, per_image_stat
+
     def get_labels(self, list_indices_temp, path_prediction, path_val, classes):
         """Save labels to folder"""
         for i, file in enumerate(list_indices_temp):
@@ -70,14 +94,14 @@ class DataGenerator(Sequence):
                     data_bands = [np.asarray(root[f])
                                   for i, f in enumerate(["TCI_R", "TCI_G", "TCI_B"])]
 
-                    #data_bands = [(np.asarray(root[f]) - self.min_v[i + 1]) / (self.max_v[i + 1]-self.min_v[i + 1])
+                    # data_bands = [(np.asarray(root[f]) - self.min_v[i + 1]) / (self.max_v[i + 1]-self.min_v[i + 1])
                     #              for i, f in enumerate(["B02", "B03", "B04"])]
                     data_bands = np.stack(data_bands)
                     # data_bands /= np.max(np.abs(data_bands), axis=0)
-                    #data_bands = (data_bands-np.min(data_bands))/\
+                    # data_bands = (data_bands-np.min(data_bands))/\
                     #             (np.max(data_bands)-np.min(data_bands))
-                    #data_bands *= 255.0
-                    #data_bands *= (255.0/(np.max(np.abs(data_bands))))
+                    # data_bands *= 255.0
+                    # data_bands *= (255.0/(np.max(np.abs(data_bands))))
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     try:
                         label = np.asarray(root['Label'])
@@ -88,31 +112,31 @@ class DataGenerator(Sequence):
                     except:
                         print("Label for " + file + " not found")
                         print(data_bands[0].shape)
-                    #img = Image.fromarray(data_bands, 'RGB')
+                    # img = Image.fromarray(data_bands, 'RGB')
                     file_name = file.split(".")[0].split("/")[-1]
-                    #img.save(path_prediction+"/"+file_name+"orig.png")
+                    # img.save(path_prediction+"/"+file_name+"orig.png")
 
-                    if not os.path.exists(path_prediction+"/"+file_name):
-                        os.mkdir(path_prediction+"/"+file_name)
-                    if not os.path.exists(path_val+"/"+file_name):
-                        os.mkdir(path_val+"/"+file_name)
+                    if not os.path.exists(path_prediction + "/" + file_name):
+                        os.mkdir(path_prediction + "/" + file_name)
+                    if not os.path.exists(path_val + "/" + file_name):
+                        os.mkdir(path_val + "/" + file_name)
 
-                    #Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
+                    # Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
                     unique_before = np.unique(data_bands)
-                    #data_bands *= 255
+                    # data_bands *= 255
                     data_bands = data_bands.astype(np.uint8)
                     skio.imsave(path_prediction + "/" + file_name + "/orig.png", data_bands)
 
-                    label = label*63 + 3
+                    label = label * 63 + 3
                     label = label.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
                     im = Image.fromarray(label)
-                    im.save(path_prediction+"/"+file_name + "/label.png")
+                    im.save(path_prediction + "/" + file_name + "/label.png")
 
-                    #sen2cor_cc = sen2cor_cc.astype(np.uint8)
-                    #sen2cor_cs = sen2cor_cs.astype(np.uint8)
-                    #sen2cor_cs *= 255
-                    sen2cor_scl = sen2cor_scl*63 + 3
+                    # sen2cor_cc = sen2cor_cc.astype(np.uint8)
+                    # sen2cor_cs = sen2cor_cs.astype(np.uint8)
+                    # sen2cor_cs *= 255
+                    sen2cor_scl = sen2cor_scl * 63 + 3
 
                     sen2cor_scl = sen2cor_scl.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
@@ -121,8 +145,8 @@ class DataGenerator(Sequence):
 
                     skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
                     for j, curr_cl in enumerate(classes):
-                        saving_filename = path_prediction+"/"+file_name+"/"+curr_cl
-                        curr_array = y[:,:,j].copy()
+                        saving_filename = path_prediction + "/" + file_name + "/" + curr_cl
+                        curr_array = y[:, :, j].copy()
                         curr_array *= 255
                         curr_array = curr_array.astype(np.uint8)
                         skio.imsave(saving_filename + ".png", curr_array)
@@ -150,9 +174,9 @@ class DataGenerator(Sequence):
         unique_list = []
         min_list = []
         max_list = []
-        X_reshaped = np.reshape(X, (len(list_indices_temp)*self.dim[0]*self.dim[1], len(self.features)))
+        X_reshaped = np.reshape(X, (len(list_indices_temp) * self.dim[0] * self.dim[1], len(self.features)))
         for j, class_curr in enumerate(self.features):
-            #print(class_curr)
+            # print(class_curr)
             std_array = np.std(X_reshaped[:, j])
             mean_array = np.mean(X_reshaped[:, j])
             unique = np.unique(X_reshaped[:, j])
@@ -164,7 +188,6 @@ class DataGenerator(Sequence):
             min_list.append(min_ar)
             max_list.append(max_ar)
 
-
         return stds_list, means_list, unique_list, min_list, max_list
 
     def __data_generation(self, list_indices_temp):
@@ -175,7 +198,8 @@ class DataGenerator(Sequence):
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
-                    data_bands = [(np.asarray(root[f]) - self.means[i])/self.stds[i] for i, f in enumerate(self.features)]
+                    data_bands = [(np.asarray(root[f]) - self.means[i]) / self.stds[i] for i, f in
+                                  enumerate(self.features)]
                     try:
                         label = np.asarray(root['Label'])
                         unique_lbl = np.unique(label)
@@ -252,16 +276,14 @@ class TestDataGenerator(keras.utils.Sequence):
                     try:
                         label = np.asarray(root['Label'])
                         y[i] = label
-                        #data_bands = np.stack(data_bands)
-                        #data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
-                        #X[i,] = data_bands
+                        # data_bands = np.stack(data_bands)
+                        # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
+                        # X[i,] = data_bands
                     except:
                         print("Label for " + file + " not found")
                         print(data_bands[0].shape)
-                        #y[i] = np.zeros_like(data_bands[0])
+                        # y[i] = np.zeros_like(data_bands[0])
                     data_bands = np.stack(data_bands)
                     data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
                     X[i,] = data_bands
         return X, y
-
-

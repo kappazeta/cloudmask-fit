@@ -22,7 +22,7 @@ from cm_fit.plot.train_history import draw_history_plots
 from tensorflow.keras.utils import Sequence
 from keras.callbacks import ModelCheckpoint
 from shutil import copyfile
-from cm_fit.plot.train_history import plot_confusion_matrix
+from cm_fit.plot.train_history import plot_confusion_matrix, draw_4lines
 
 
 class CMInit(ulog.Loggable):
@@ -379,3 +379,88 @@ class CMInit(ulog.Loggable):
         """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
+
+    def test(self, product_name, path_weights):
+
+        self.get_model_by_name(self.model_arch)
+
+        # Propagate configuration parameters.
+        self.model.set_batch_size(self.batch_size_predict)
+
+        # Construct and compile the model.
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.compile()
+
+        # Load model weights.
+        self.model.load_weights(self.checkpoints_path + "/" + path_weights)
+
+        # Create an array for storing the segmentation mask.
+        probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
+        class_mask = np.zeros((self.dim[0], self.dim[1]), dtype=np.uint8)
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_predict
+        self.params["shuffle"] = False
+
+        file_specificator = product_name.rsplit('.', 1)[0]
+        date_match = file_specificator.rsplit('_', 1)[-1]
+        index_match = file_specificator.rsplit('_', 1)[0].rsplit('_', 1)[-1]
+
+        tile_paths = []
+
+        for subfolder in os.listdir(self.path_data_dir):
+            if subfolder.startswith(index_match + "_" + date_match):
+                tile_paths.append(os.path.join(self.path_data_dir, subfolder))
+        test_generator = DataGenerator(tile_paths, **self.params)
+        test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
+        test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
+
+        predictions = self.model.predict(test_generator)
+        y_pred = np.argmax(predictions, axis=3)
+        classes = test_generator.get_classes()
+        y_true = np.argmax(classes, axis=3)
+
+        y_pred = y_pred.flatten()
+        y_true = y_true.flatten()
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true, y_pred, self.classes)
+        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot_test.png'))
+        plt.close()
+
+        for i, matrix in enumerate(cm_multi_norm):
+            plt.figure()
+            plot_confusion_matrix(matrix, ["Other", self.classes[i]],
+                                  self.experiment_name + ": cf_matrix " + self.classes[i], normalized=True)
+            plt.savefig(os.path.join(self.plots_path, 'cf_matrix_' + self.classes[i] + '_test.png'))
+            plt.close()
+
+        classes = self.model.predict_classes_gen(test_generator)
+
+        print(predictions.shape)
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(tile_paths[i], prediction, classes[i], self.prediction_path)
+        return
+
+    def run_stats(self):
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_train
+
+        path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
+        with open(path_splits, "r") as fo:
+            dictionary = json.load(fo)
+
+        training_generator = DataGenerator(dictionary['train'], **self.params)
+        validation_generator = DataGenerator(dictionary['val'], **self.params)
+        test_generator = DataGenerator(dictionary['test'], **self.params)
+        train_std, train_means, train_min, train_max = set_normalization(training_generator, dictionary['train'], 5)
+        val_std, val_means, val_min, val_max = set_normalization(validation_generator, dictionary['val'], 1)
+        print("Stats")
+        print(train_std, train_means, train_min, train_max)
+        tr_overall_stat, tr_per_image_stat = training_generator.get_label_stat(dictionary['train'], self.classes)
+        val_overall_stat, val_per_image_stat = validation_generator.get_label_stat(dictionary['val'], self.classes)
+        test_overall_stat, test_per_image_stat = test_generator.get_label_stat(dictionary['test'], self.classes)
+        print(tr_overall_stat, val_overall_stat, test_overall_stat)
+        print(test_per_image_stat)
+        draw_4lines(tr_per_image_stat, "train", self.experiment_res_folder, self.classes)
+        draw_4lines(val_per_image_stat, "val", self.experiment_res_folder, self.classes)
+        draw_4lines(test_per_image_stat, "test", self.experiment_res_folder, self.classes)
+        return

@@ -1,7 +1,53 @@
 import matplotlib.pyplot as plt
 import os
 import plotly.graph_objects as go
+import plotly.express as px
 import numpy as np
+import pandas as pd
+
+
+def draw_4lines(history, set, results_folder, classes):
+    graph_folder = results_folder + "/plots"
+    if not os.path.exists(graph_folder):
+        os.mkdir(graph_folder)
+
+    for i, cur_class in enumerate(classes):
+        curr_class_history = pd.Series([el[i] for el in history])
+        # Loss plot
+        plt.figure()
+        plt.hist(curr_class_history)
+
+        plt.title(set + ' distribution ' + cur_class)
+        plt.ylabel(cur_class)
+        plt.xlabel('images')
+        plt.savefig(graph_folder + "/" + set + ' distribution ' + cur_class + ".png")
+
+        layout = go.Layout(
+            title=set + ' distribution ' + cur_class,
+            plot_bgcolor="#FFFFFF",
+            hovermode="x",
+            hoverdistance=100,  # Distance to show hover label of data point
+            spikedistance=1000,  # Distance to show spike
+            xaxis=dict(
+                title="images",
+                linecolor="#BCCCDC",
+                showspikes=True,  # Show spike line for X-axis
+                # Format spike
+                spikethickness=2,
+                spikedash="dot",
+                spikecolor="#999999",
+                spikemode="across",
+            ),
+            yaxis=dict(
+                title=cur_class,
+                linecolor="#BCCCDC"
+            )
+        )
+
+        fig = px.histogram(curr_class_history, title=set + ' distribution ' + cur_class)
+        fig.write_html(graph_folder + "/" + set + ' distribution ' + cur_class + ".html")
+
+    return
 
 
 def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):

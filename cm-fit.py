@@ -27,7 +27,7 @@ def main():
     # Parse command-line arguments.
     p = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
-    p.add_argument("-T", "--train", action="store_true", dest="train", default=True,
+    p.add_argument("-T", "--train", action="store_true", dest="train", default=False,
                    help="Train a new model.")
     p.add_argument("-P", "--predict", action="store", dest="predict", default=None,
                    help="Path to predict on.")
@@ -43,6 +43,12 @@ def main():
                    help="Using other data_generator")
     p.add_argument("-V", "--validate", dest="validate", action="store", default=None,
                    help="Validation running")
+    p.add_argument("-S", "--test", dest="test", action="store", default=None,
+                   help="Testing for product name")
+    p.add_argument("-A", "--augment", dest="augmentation", action="store", default=None,
+                   help="Allow data augmentation")
+    p.add_argument("-G", "--stats", dest="statistic", action="store", default=None,
+                   help="Show label distribution")
 
     args = p.parse_args()
 
@@ -58,13 +64,17 @@ def main():
             cmf = CMInit()
             cmf.load_config(args.path_config)
             print("Development mode")
-            if args.predict is not None:
+            if args.statistic:
+                cmf.run_stats()
+            """if args.predict is not None:
                 cmf.predict(args.predict, args.weights)
             elif args.validate:
                 cmf.validation()
             elif args.train:
                 cmf.split()
                 cmf.train()
+            elif args.test:
+                cmf.test(args.test, args.weights)"""
         else:
             cmf = CMFit()
             cmf.load_config(args.path_config)
