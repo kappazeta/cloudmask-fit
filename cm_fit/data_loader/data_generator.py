@@ -10,7 +10,7 @@ from tensorflow.python.keras.utils.data_utils import Sequence
 
 
 class DataGenerator(Sequence):
-    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, shuffle=True):
+    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, shuffle=True, png_form=False):
         """ Initialization """
         self.path = path_input
         self.stds = [0.00044, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.033, 0.025, 0.021, 0.0049]
@@ -20,10 +20,14 @@ class DataGenerator(Sequence):
         self.list_indices = list_indices
         self.total_length = len(self.list_indices)
         self.batch_size = batch_size
-        self.features = features
+        if png_form:
+            self.features = ["TCI_R", "TCI_G", "TCI_B"]
+        else:
+            self.features = features
         self.dim = dim
         self.num_classes = num_classes
         self.shuffle = shuffle
+        self.png_form = png_form
         self.on_epoch_end()
 
     def __len__(self):
@@ -110,8 +114,9 @@ class DataGenerator(Sequence):
                         sen2cor_cs = np.asarray(root['S2CS'])
                         sen2cor_scl = np.asarray(root['SCL'])
                     except:
-                        print("Label for " + file + " not found")
-                        print(data_bands[0].shape)
+                        sen2cor_cc = np.asarray(root['S2CC'])
+                        sen2cor_cs = np.asarray(root['S2CS'])
+                        sen2cor_scl = np.asarray(root['SCL'])
                     # img = Image.fromarray(data_bands, 'RGB')
                     file_name = file.split(".")[0].split("/")[-1]
                     # img.save(path_prediction+"/"+file_name+"orig.png")
@@ -198,8 +203,12 @@ class DataGenerator(Sequence):
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
-                    data_bands = [(np.asarray(root[f]) - self.means[i]) / self.stds[i] for i, f in
-                                  enumerate(self.features)]
+                    if self.png_form:
+                        data_bands = [(np.asarray(root[f]))*1/255 for i, f in
+                                      enumerate(self.features)]
+                    else:
+                        data_bands = [(np.asarray(root[f]) - self.means[i]) / self.stds[i] for i, f in
+                                      enumerate(self.features)]
                     try:
                         label = np.asarray(root['Label'])
                         unique_lbl = np.unique(label)
