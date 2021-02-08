@@ -27,9 +27,9 @@ def main():
     # Parse command-line arguments.
     p = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
-    p.add_argument("-T", "--train", action="store_true", dest="train", default=False,
+    p.add_argument("-train", "--train", action="store_true", dest="train", default=False,
                    help="Train a new model.")
-    p.add_argument("-P", "--predict", action="store", dest="predict", default=None,
+    p.add_argument("-predict", "--predict", action="store", dest="predict", default=None,
                    help="Path to predict on.")
     p.add_argument("-w", "--weights", action="store", dest="weights", default=None,
                    help="Path to the model weights to use for prediction.")
@@ -41,14 +41,16 @@ def main():
                    help="Level of verbosity (1 - 3).")
     p.add_argument("-d", "--dev_mode", dest="dev_mode", default=False,
                    help="Using other data_generator")
-    p.add_argument("-V", "--validate", dest="validate", action="store", default=None,
+    p.add_argument("-val", "--validate", dest="validate", action="store", default=None,
                    help="Validation running")
-    p.add_argument("-S", "--test", dest="test", action="store", default=None,
+    p.add_argument("-test", "--test", dest="test", action="store", default=None,
                    help="Testing for product name")
-    p.add_argument("-A", "--augment", dest="augmentation", action="store", default=None,
+    p.add_argument("-aug", "--augment", dest="augmentation", action="store", default=None,
                    help="Allow data augmentation")
-    p.add_argument("-G", "--stats", dest="statistic", action="store", default=None,
+    p.add_argument("-stat", "--stats", dest="statistic", action="store", default=None,
                    help="Show label distribution")
+    p.add_argument("-png", "--train_png", dest="train_png", action="store", default=None,
+                   help="training for 3 features")
 
     args = p.parse_args()
 
@@ -60,13 +62,18 @@ def main():
             logfile=args.logfile_path
         )
 
-        if args.dev_mode:
+        if args.train_png:
+            cmf = CMInit(png_mode=True)
+            cmf.load_config(args.path_config)
+            cmf.split()
+            cmf.train()
+        elif args.dev_mode:
             cmf = CMInit()
             cmf.load_config(args.path_config)
             print("Development mode")
-            if args.statistic:
-                cmf.run_stats()
-            """if args.predict is not None:
+            """if args.statistic:
+                cmf.run_stats()"""
+            if args.predict is not None:
                 cmf.predict(args.predict, args.weights)
             elif args.validate:
                 cmf.validation()
@@ -74,7 +81,7 @@ def main():
                 cmf.split()
                 cmf.train()
             elif args.test:
-                cmf.test(args.test, args.weights)"""
+                cmf.test(args.test, args.weights)
         else:
             cmf = CMFit()
             cmf.load_config(args.path_config)
