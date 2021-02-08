@@ -51,6 +51,8 @@ def main():
                    help="Show label distribution")
     p.add_argument("-png", "--train_png", dest="train_png", action="store", default=None,
                    help="training for 3 features")
+    p.add_argument("-select", "--selecting", dest="selecting", action="store", default=None,
+                   help="training for 3 features")
 
     args = p.parse_args()
 
@@ -62,7 +64,11 @@ def main():
             logfile=args.logfile_path
         )
 
-        if args.train_png:
+        if args.selecting:
+            cmf = CMInit()
+            cmf.load_config(args.path_config)
+            cmf.predict(args.selecting, args.weights)
+        elif args.train_png:
             cmf = CMInit(png_mode=True)
             cmf.load_config(args.path_config)
             cmf.split()

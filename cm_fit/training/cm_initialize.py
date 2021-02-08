@@ -26,7 +26,7 @@ from cm_fit.plot.train_history import plot_confusion_matrix, draw_4lines
 
 
 class CMInit(ulog.Loggable):
-    def __init__(self):
+    def __init__(self, png_mode=False):
         super(CMInit, self).__init__("CMF")
 
         self.cfg = {
@@ -88,6 +88,8 @@ class CMInit(ulog.Loggable):
 
         self.model = None
         self.splits = {}
+        if png_mode:
+            self.png_iterator = True
         physical_devices = tf.config.experimental.list_physical_devices('GPU')
         tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
@@ -264,6 +266,42 @@ class CMInit(ulog.Loggable):
         print(filename_image)
         return True
 
+    def get_model_memory_usage(self, batch_size, model):
+        import numpy as np
+        try:
+            from keras import backend as K
+        except:
+            from tensorflow.keras import backend as K
+
+        shapes_mem_count = 0
+        internal_model_mem_count = 0
+        for l in model.layers:
+            layer_type = l.__class__.__name__
+            if layer_type == 'Model':
+                internal_model_mem_count += self.get_model_memory_usage(batch_size, l)
+            single_layer_mem = 1
+            out_shape = l.output_shape
+            if type(out_shape) is list:
+                out_shape = out_shape[0]
+            for s in out_shape:
+                if s is None:
+                    continue
+                single_layer_mem *= s
+            shapes_mem_count += single_layer_mem
+
+        trainable_count = np.sum([K.count_params(p) for p in model.trainable_weights])
+        non_trainable_count = np.sum([K.count_params(p) for p in model.non_trainable_weights])
+
+        number_size = 4.0
+        if K.floatx() == 'float16':
+            number_size = 2.0
+        if K.floatx() == 'float64':
+            number_size = 8.0
+
+        total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
+        gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
+        return gbytes
+
     def train(self):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
@@ -271,10 +309,17 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
 
-        training_generator = DataGenerator(self.splits['train'], **self.params)
-        validation_generator = DataGenerator(self.splits['val'], **self.params)
+        if self.png_iterator:
+            self.features = ["TCI_R", "TCI_G", "TCI_B"]
+            training_generator = DataGenerator(self.splits['train'], **self.params, png_form=True)
+            validation_generator = DataGenerator(self.splits['val'], **self.params, png_form=True)
+        else:
+            training_generator = DataGenerator(self.splits['train'], **self.params)
+            validation_generator = DataGenerator(self.splits['val'], **self.params)
+
         self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
+
         checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/unet_init_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
@@ -286,10 +331,13 @@ class CMInit(ulog.Loggable):
         self.model.model.summary()
         self.model.compile()
 
+        size = self.get_model_memory_usage(self.batch_size_train, self.model.model)
+
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
-        train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 5)
-        val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
+        if not self.png_iterator:
+            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 5)
+            val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
 
         # Fit the model, storing weights in checkpoints/.
         history = self.model.fit(training_generator,
@@ -329,8 +377,13 @@ class CMInit(ulog.Loggable):
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
         val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
-        valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
-
+        length = dictionary['total']
+        temp_list = dictionary['filepaths'][0:length//20]
+        valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
+        for i in range(20):
+            if i > 0:
+                temp_list = dictionary['filepaths'][(i*length)//20:((i+1)*length) // 20]
+                valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
         predictions = self.model.predict(valid_generator)
         y_pred = np.argmax(predictions, axis=3)
         classes = valid_generator.get_classes()
@@ -343,13 +396,13 @@ class CMInit(ulog.Loggable):
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
 
-        for i, matrix in enumerate(cm_multi_norm):
+        """for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
             plot_confusion_matrix(matrix, ["Other", self.classes[i]], self.experiment_name + ": cf_matrix "+self.classes[i], normalized=True)
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_'+self.classes[i]+'.png'))
-            plt.close()
+            plt.close()"""
 
-        classes = self.model.predict_classes_gen(valid_generator)
+        #classes = self.model.predict_classes_gen(valid_generator)
 
         print(predictions.shape)
         for i, prediction in enumerate(predictions):
@@ -438,6 +491,46 @@ class CMInit(ulog.Loggable):
         print(predictions.shape)
         for i, prediction in enumerate(predictions):
             self.save_masks_contrast(tile_paths[i], prediction, classes[i], self.prediction_path)
+        return
+
+    def selecting(self, product_name, path_weights):
+
+        self.get_model_by_name(self.model_arch)
+
+        # Propagate configuration parameters.
+        self.model.set_batch_size(self.batch_size_predict)
+
+        # Construct and compile the model.
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.compile()
+
+        # Load model weights.
+        self.model.load_weights(self.checkpoints_path + "/" + path_weights)
+
+        # Create an array for storing the segmentation mask.
+        probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
+        class_mask = np.zeros((self.dim[0], self.dim[1]), dtype=np.uint8)
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_predict
+        self.params["shuffle"] = False
+
+        file_specificator = product_name.rsplit('.', 1)[0]
+        date_match = file_specificator.rsplit('_', 1)[-1]
+        index_match = file_specificator.rsplit('_', 1)[0].rsplit('_', 1)[-1]
+
+        # Read splits again
+        path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
+        with open(path_splits, "r") as fo:
+            dictionary = json.load(fo)
+
+        test_generator = DataGenerator(dictionary['val'], **self.params)
+        test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 1)
+        # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
+
+        predictions = self.model.predict(test_generator)
+        y_pred = np.argmax(predictions, axis=3)
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
         return
 
     def run_stats(self):
