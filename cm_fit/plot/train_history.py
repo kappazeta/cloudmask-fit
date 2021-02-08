@@ -57,7 +57,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
-    fig, ax = plt.subplots(figsize=(20, 20))
+    fig, ax = plt.subplots(figsize=(30, 30))
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
     # We want to show all ticks...
     ax.set(xticks=np.arange(cm.shape[1]),
@@ -65,9 +65,9 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
            # ... and label them with the respective list entries
            xticklabels=class_list, yticklabels=class_list,
             )
-    plt.xlabel('Predicted label', fontsize=20)
-    plt.ylabel('True label', fontsize=20)
-    ax.set_title(title, pad=30, fontsize=25)
+    plt.xlabel('Predicted label', fontsize=32)
+    plt.ylabel('True label', fontsize=32)
+    ax.set_title(title, pad=30, fontsize=32)
 
     # Turn spines off.
     for edge, spine in ax.spines.items():
@@ -75,17 +75,17 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor", fontsize=20)
-    plt.setp(ax.get_yticklabels(), fontsize=20)
+             rotation_mode="anchor", fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
 
     # Loop over data dimensions and create text annotations.
-    fmt = '.2f' if normalized else 'd'
+    fmt = '.3f' if normalized else 'd'
     thresh = cm.max() / 2.
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
             ax.text(j, i, format(cm[i, j], fmt),
                     ha="center", va="center",
-                    color="white" if cm[i, j] > thresh or cm[i, j] < 0.01 else "black", fontsize=15
+                    color="white" if cm[i, j] > thresh or cm[i, j] < 0.01 else "black", fontsize=36
                     )
     fig.tight_layout()
     return ax
@@ -185,15 +185,15 @@ def draw_history_plots(history, experiment_name, results_folder):
     fig.write_html(graph_folder + "/cat_accuracy.html")
 
     # IoU plot
-    plt.figure()
-    plt.plot(history.history['mean_io_u'])
+    """plt.figure()
+    #plt.plot(history.history['mean_io_u'])
     plt.plot(history.history['val_mean_io_u'])
     plt.title(experiment_name+' model IoU')
     plt.ylabel('Mean IoU')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(graph_folder + "/meaniou.png")
-
+    plt.savefig(graph_folder + "/meaniou.png")"""
+    """
     layout = go.Layout(
         title=experiment_name+' model IoU',
         plot_bgcolor="#FFFFFF",
@@ -226,7 +226,7 @@ def draw_history_plots(history, experiment_name, results_folder):
         data.append(line_chart)
 
     fig = go.Figure(data=data, layout=layout)
-    fig.write_html(graph_folder + "/mean_io_u.html")
+    fig.write_html(graph_folder + "/mean_io_u.html")"""
 
     # Precision
     plt.figure()
