@@ -67,8 +67,8 @@ class CMModel(log.Loggable):
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.model.compile(optimizer=l_op, loss=self.dice_loss, #'categorical_crossentropy',
-                           metrics=[self.METRICS_SET["iou"], self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+        self.model.compile(optimizer=l_op, loss='categorical_crossentropy', #self.dice_loss, #'categorical_crossentropy',
+                           metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                     self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
         print("new optimizer")
         self.model.summary()
