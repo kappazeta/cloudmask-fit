@@ -67,7 +67,8 @@ def main():
         if args.selecting:
             cmf = CMInit()
             cmf.load_config(args.path_config)
-            cmf.predict(args.selecting, args.weights)
+            cmf.split()
+            cmf.selecting(args.selecting, args.weights)
         elif args.train_png:
             cmf = CMInit(png_mode=True)
             cmf.load_config(args.path_config)
