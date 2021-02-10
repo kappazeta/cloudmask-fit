@@ -250,6 +250,10 @@ class CMInit(ulog.Loggable):
     def save_masks_contrast(self, path_image, prediction, classification, saving_path):
         path_image = path_image.rstrip()
         filename_image = path_image.split('/')[-1].split(".")[0]
+        if not os.path.exists(saving_path):
+            os.mkdir(saving_path)
+        if not os.path.exists(saving_path + "/" + filename_image):
+            os.mkdir(saving_path + "/" + filename_image)
         for i, label in enumerate(self.classes):
             saving_filename = saving_path + "/" + filename_image + "/predict_" + label
             current_class = prediction[:, :, i]
