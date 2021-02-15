@@ -42,19 +42,20 @@ if __name__ == "__main__":
             try:
                 path = folder + "/" + subfolder
                 pred_im = np.asarray(Image.open(folder + "/" + subfolder + "/prediction.png"))
-                label_im = np.asarray(Image.open(folder + "/" + subfolder + "/label.png"))
+                # TODO:: Label can be missing
+                #label_im = np.asarray(Image.open(folder + "/" + subfolder + "/label.png"))
                 orig_im = np.asarray(Image.open(folder + "/" + subfolder + "/orig.png"))
                 scl_im = np.asarray(Image.open(folder + "/" + subfolder + "/SCL.png"))
                 pred_im = np.flip(pred_im, 0)
                 orig_im = np.flip(orig_im, 0)
-                label_im = np.flip(label_im, 0)
+                #label_im = np.flip(label_im, 0)
                 scl_im = np.flip(scl_im, 0)
                 splitting = subfolder.rsplit('_', 2)
                 x = int(splitting[1])
                 y = int(splitting[-1])
                 big_orig[y * TILESIZE:(y + 1) * TILESIZE, x * TILESIZE:(x + 1) * TILESIZE, :] = orig_im
                 big_pred[y * TILESIZE:(y + 1) * TILESIZE, x * TILESIZE:(x + 1) * TILESIZE] = pred_im
-                big_label[y * TILESIZE:(y + 1) * TILESIZE, x * TILESIZE:(x + 1) * TILESIZE] = label_im
+                #big_label[y * TILESIZE:(y + 1) * TILESIZE, x * TILESIZE:(x + 1) * TILESIZE] = label_im
                 big_scl[y * TILESIZE:(y + 1) * TILESIZE, x * TILESIZE:(x + 1) * TILESIZE] = scl_im
             except:
                 print("No subfolder " + subfolder)
@@ -71,9 +72,9 @@ if __name__ == "__main__":
     im_pred = Image.fromarray(big_pred)
     im_pred.save(directory + "/" + index_match + "_" + date_match + "_im_pred.png")
 
-    big_label = big_label.astype(np.uint8)
-    im_label = Image.fromarray(big_label)
-    im_label.save(directory + "/" + index_match + "_" + date_match + "_im_label.png")
+    #big_label = big_label.astype(np.uint8)
+    #im_label = Image.fromarray(big_label)
+    #im_label.save(directory + "/" + index_match + "_" + date_match + "_im_label.png")
 
     big_scl = big_scl.astype(np.uint8)
     im_scl = Image.fromarray(big_scl)

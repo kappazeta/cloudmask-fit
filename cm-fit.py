@@ -53,6 +53,8 @@ def main():
                    help="training for 3 features")
     p.add_argument("-select", "--selecting", dest="selecting", action="store", default=None,
                    help="training for 3 features")
+    p.add_argument("-orig", "--original_rgb", dest="original_rgb", action="store", default=None,
+                   help="save original rgb")
 
     args = p.parse_args()
 
@@ -69,6 +71,11 @@ def main():
             cmf.load_config(args.path_config)
             cmf.split()
             cmf.selecting(args.selecting, args.weights)
+        elif args.original_rgb:
+            cmf = CMInit()
+            cmf.load_config(args.path_config)
+            cmf.split()
+            cmf.get_origin_im()
         elif args.train_png:
             cmf = CMInit(png_mode=True)
             cmf.load_config(args.path_config)

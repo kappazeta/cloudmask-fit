@@ -561,3 +561,16 @@ class CMInit(ulog.Loggable):
         draw_4lines(val_per_image_stat, "val", self.experiment_res_folder, self.classes)
         draw_4lines(test_per_image_stat, "test", self.experiment_res_folder, self.classes)
         return
+
+    def get_origin_im(self):
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_train
+
+        path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
+        with open(path_splits, "r") as fo:
+            dictionary = json.load(fo)
+
+        validation_generator = DataGenerator(dictionary['val'], **self.params)
+        validation_generator.store_orig(dictionary['val'], self.prediction_path)
+
+        return

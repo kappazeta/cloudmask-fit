@@ -89,6 +89,57 @@ class DataGenerator(Sequence):
         overall_stat = {k: v / sum(overall_stat.values()) for k, v in overall_stat.items()}
         return overall_stat, per_image_stat
 
+    def store_orig(self, list_indices_temp, path_prediction):
+        """Save labels to folder"""
+        for i, file in enumerate(list_indices_temp):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    y = np.empty((self.dim[0], self.dim[1], self.num_classes), dtype=int)
+                    data_bands = [np.asarray(root[f])
+                                  for i, f in enumerate(["TCI_R", "TCI_G", "TCI_B"])]
+
+                    # data_bands = [(np.asarray(root[f]) - self.min_v[i + 1]) / (self.max_v[i + 1]-self.min_v[i + 1])
+                    #              for i, f in enumerate(["B02", "B03", "B04"])]
+                    data_bands = np.stack(data_bands)
+                    # data_bands /= np.max(np.abs(data_bands), axis=0)
+                    # data_bands = (data_bands-np.min(data_bands))/\
+                    #             (np.max(data_bands)-np.min(data_bands))
+                    # data_bands *= 255.0
+                    # data_bands *= (255.0/(np.max(np.abs(data_bands))))
+                    data_bands = np.rollaxis(data_bands, 0, 3)
+                    try:
+                        sen2cor_cc = np.asarray(root['S2CC'])
+                        sen2cor_cs = np.asarray(root['S2CS'])
+                        sen2cor_scl = np.asarray(root['SCL'])
+                    except:
+                        sen2cor_cc = np.asarray(root['S2CC'])
+                        sen2cor_cs = np.asarray(root['S2CS'])
+                        sen2cor_scl = np.asarray(root['SCL'])
+                    # img = Image.fromarray(data_bands, 'RGB')
+                    file_name = file.split(".")[0].split("/")[-1]
+                    # img.save(path_prediction+"/"+file_name+"orig.png")
+
+                    if not os.path.exists(path_prediction + "/" + file_name):
+                        os.mkdir(path_prediction + "/" + file_name)
+
+                    # Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
+                    unique_before = np.unique(data_bands)
+                    # data_bands *= 255
+                    data_bands = data_bands.astype(np.uint8)
+                    skio.imsave(path_prediction + "/" + file_name + "/orig.png", data_bands)
+
+                    # sen2cor_cc = sen2cor_cc.astype(np.uint8)
+                    # sen2cor_cs = sen2cor_cs.astype(np.uint8)
+                    # sen2cor_cs *= 255
+                    sen2cor_scl = sen2cor_scl * 63 + 3
+
+                    sen2cor_scl = sen2cor_scl.astype(np.uint8)
+                    # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                    im = Image.fromarray(sen2cor_scl)
+                    im.save(path_prediction + "/" + file_name + "/SCL.png")
+
+                    skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
+
     def get_labels(self, list_indices_temp, path_prediction, path_val, classes):
         """Save labels to folder"""
         for i, file in enumerate(list_indices_temp):
@@ -290,7 +341,7 @@ class TestDataGenerator(keras.utils.Sequence):
                         # X[i,] = data_bands
                     except:
                         print("Label for " + file + " not found")
-                        print(data_bands[0].shape)
+                        #print(data_bands[0].shape)
                         # y[i] = np.zeros_like(data_bands[0])
                     data_bands = np.stack(data_bands)
                     data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
