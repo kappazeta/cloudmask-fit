@@ -133,12 +133,12 @@ class DataGenerator(Sequence):
                     # sen2cor_cc = sen2cor_cc.astype(np.uint8)
                     # sen2cor_cs = sen2cor_cs.astype(np.uint8)
                     # sen2cor_cs *= 255
-                    sen2cor_scl = sen2cor_scl * 63 + 3
+                    #sen2cor_scl = sen2cor_scl * 63 + 3
 
-                    sen2cor_scl = sen2cor_scl.astype(np.uint8)
+                    #sen2cor_scl = sen2cor_scl.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
-                    im = Image.fromarray(sen2cor_scl)
-                    im.save(path_prediction + "/" + file_name + "/SCL.png")
+                    #im = Image.fromarray(sen2cor_scl)
+                    #im.save(path_prediction + "/" + file_name + "/SCL.png")
 
                     #skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
 
