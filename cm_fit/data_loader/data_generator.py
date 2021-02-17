@@ -138,7 +138,7 @@ class DataGenerator(Sequence):
                     im = Image.fromarray(sen2cor_scl)
                     im.save(path_prediction + "/" + file_name + "/SCL.png")
 
-                    skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
+                    #skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
 
     def get_labels(self, list_indices_temp, path_prediction, path_val, classes):
         """Save labels to folder"""
