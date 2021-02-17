@@ -109,12 +109,12 @@ class DataGenerator(Sequence):
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     try:
                         #sen2cor_cc = np.asarray(root['S2CC'])
-                        sen2cor_cs = np.asarray(root['S2CS'])
-                        sen2cor_scl = np.asarray(root['SCL'])
+                        #sen2cor_cs = np.asarray(root['S2CS'])
+                        #sen2cor_scl = np.asarray(root['SCL'])
                     except:
                         #sen2cor_cc = np.asarray(root['S2CC'])
-                        sen2cor_cs = np.asarray(root['S2CS'])
-                        sen2cor_scl = np.asarray(root['SCL'])
+                        #sen2cor_cs = np.asarray(root['S2CS'])
+                        #sen2cor_scl = np.asarray(root['SCL'])
                     # img = Image.fromarray(data_bands, 'RGB')
                     file_name = file.split(".")[0].split("/")[-1]
                     # img.save(path_prediction+"/"+file_name+"orig.png")
