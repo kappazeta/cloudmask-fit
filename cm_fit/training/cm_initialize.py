@@ -56,7 +56,7 @@ class CMInit(ulog.Loggable):
         }
 
         self.classes = [
-            "UNDEFINED", "CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD"
+            "UNDEFINED", "CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"
         ]
 
         self.split_ratio_test = 0.1
@@ -90,6 +90,8 @@ class CMInit(ulog.Loggable):
         self.splits = {}
         if png_mode:
             self.png_iterator = True
+        else:
+            self.png_iterator = False
         physical_devices = tf.config.experimental.list_physical_devices('GPU')
         tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
@@ -340,7 +342,7 @@ class CMInit(ulog.Loggable):
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
         if not self.png_iterator:
-            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 5)
+            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 6)
             val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
 
         # Fit the model, storing weights in checkpoints/.
