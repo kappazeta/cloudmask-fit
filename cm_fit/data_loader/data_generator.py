@@ -66,7 +66,7 @@ class DataGenerator(Sequence):
             np.random.shuffle(self.indexes)
 
     def get_label_stat(self, list_indices_temp, classes):
-        overall_stat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+        overall_stat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5:0}
         per_image_stat = []
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -74,7 +74,7 @@ class DataGenerator(Sequence):
                     try:
                         label = np.asarray(root['Label'])
                         unique_elements, counts_elements = np.unique(label, return_counts=True)
-                        curr_dic = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+                        curr_dic = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
                         for j in range(len(unique_elements)):
                             overall_stat[unique_elements[j]] += counts_elements[j]
                             curr_dic[j] += counts_elements[j]
@@ -185,7 +185,8 @@ class DataGenerator(Sequence):
                     data_bands = data_bands.astype(np.uint8)
                     skio.imsave(path_prediction + "/" + file_name + "/orig.png", data_bands)
 
-                    label = label * 51
+                    label = label * 63 + 3
+                    label[label > 255] = 20
                     label = label.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
                     im = Image.fromarray(label)
@@ -194,7 +195,8 @@ class DataGenerator(Sequence):
                     # sen2cor_cc = sen2cor_cc.astype(np.uint8)
                     # sen2cor_cs = sen2cor_cs.astype(np.uint8)
                     # sen2cor_cs *= 255
-                    sen2cor_scl = sen2cor_scl * 51
+                    sen2cor_scl = sen2cor_scl * 63 + 3
+                    sen2cor_scl[sen2cor_scl > 255] = 20
 
                     sen2cor_scl = sen2cor_scl.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
@@ -208,6 +210,7 @@ class DataGenerator(Sequence):
                         curr_array *= 255
                         curr_array = curr_array.astype(np.uint8)
                         skio.imsave(saving_filename + ".png", curr_array)
+        return True
 
     def get_normal_par(self, list_indices_temp):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)

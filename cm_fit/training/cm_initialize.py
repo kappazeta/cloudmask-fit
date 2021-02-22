@@ -264,12 +264,12 @@ class CMInit(ulog.Loggable):
             current_class *= 255
             current_class = current_class.astype(np.uint8)
             skio.imsave(saving_filename+".png", current_class)
-        classification = classification*51
+        classification = classification*63 + 3
+        classification[classification > 255] = 20
         classification = classification.astype(np.uint8)
         #skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
         im = Image.fromarray(classification)
         im.save(saving_path + "/" + filename_image + "/prediction.png")
-        print(filename_image)
         return True
 
     def get_model_memory_usage(self, batch_size, model):
@@ -382,22 +382,23 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
+        # valid_generator.store_orig(dictionary['val'], self.prediction_path)
         val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
         length = dictionary['total']
         temp_list = dictionary['filepaths'][0:length//20]
-        valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
-        for i in range(20):
-            if i > 0:
-                temp_list = dictionary['filepaths'][(i*length)//20:((i+1)*length) // 20]
-                valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
+        #out = valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
+        #for i in range(20):
+        #    if i > 0:
+        #        temp_list = dictionary['filepaths'][(i*length)//20:((i+1)*length) // 20]
+        #        valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
         predictions = self.model.predict(valid_generator)
         y_pred = np.argmax(predictions, axis=3)
         classes = valid_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
 
-        y_pred = y_pred.flatten()
-        y_true = y_true.flatten()
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true, y_pred, self.classes)
+        y_pred_fl = y_pred.flatten()
+        y_true_fl = y_true.flatten()
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
@@ -410,9 +411,8 @@ class CMInit(ulog.Loggable):
 
         #classes = self.model.predict_classes_gen(valid_generator)
 
-        print(predictions.shape)
         for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['val'][i], prediction, classes[i], self.prediction_path)
+            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
 
         """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
         self.save_to_img("output/model_v1/prediction.png", class_mask)
@@ -530,8 +530,9 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         test_generator = DataGenerator(dictionary['val'], **self.params)
-        test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 1)
+        test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 30)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
+        test_generator.store_orig(dictionary['val'], self.prediction_path)
 
         predictions = self.model.predict(test_generator)
         y_pred = np.argmax(predictions, axis=3)

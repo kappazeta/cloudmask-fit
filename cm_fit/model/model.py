@@ -158,7 +158,7 @@ class CMModel(log.Loggable):
     @staticmethod
     def get_confusion_matrix(y_true, y_pred, classes):
         cm = confusion_matrix(y_true, y_pred)
-        cm_multi = multilabel_confusion_matrix(y_true, y_pred, labels=[0, 1, 2, 3, 4])
+        cm_multi = multilabel_confusion_matrix(y_true, y_pred, labels=[0, 1, 2, 3, 4, 5])
         cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         cm_multi_norm = cm_multi.astype('float') / cm_multi.sum(axis=2)[:, :, np.newaxis]
         return cm, cm_normalized, cm_multi, cm_multi_norm
