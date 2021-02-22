@@ -185,7 +185,7 @@ class DataGenerator(Sequence):
                     data_bands = data_bands.astype(np.uint8)
                     skio.imsave(path_prediction + "/" + file_name + "/orig.png", data_bands)
 
-                    label = label * 63 + 3
+                    label = label * 51
                     label = label.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
                     im = Image.fromarray(label)
@@ -194,7 +194,7 @@ class DataGenerator(Sequence):
                     # sen2cor_cc = sen2cor_cc.astype(np.uint8)
                     # sen2cor_cs = sen2cor_cs.astype(np.uint8)
                     # sen2cor_cs *= 255
-                    sen2cor_scl = sen2cor_scl * 63 + 3
+                    sen2cor_scl = sen2cor_scl * 51
 
                     sen2cor_scl = sen2cor_scl.astype(np.uint8)
                     # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)

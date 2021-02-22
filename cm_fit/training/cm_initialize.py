@@ -264,7 +264,7 @@ class CMInit(ulog.Loggable):
             current_class *= 255
             current_class = current_class.astype(np.uint8)
             skio.imsave(saving_filename+".png", current_class)
-        classification = classification*63 + 3
+        classification = classification*51
         classification = classification.astype(np.uint8)
         #skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
         im = Image.fromarray(classification)
