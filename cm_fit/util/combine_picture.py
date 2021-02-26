@@ -15,6 +15,7 @@ EXPERIMENT_PATH = "/sar/data/cvat/code/cloudmask-fit/results/dice_loss_pr"
 TILESIZE = 512
 
 if __name__ == "__main__":
+    # Parsing Product name
     file_specificator = PRODUCT.rsplit('.', 1)[0]
     date_match = file_specificator.rsplit('_', 1)[-1]
     index_match = file_specificator.rsplit('_', 1)[0].rsplit('_', 1)[-1]
@@ -32,6 +33,7 @@ if __name__ == "__main__":
     big_image_x = (len(set_x) + 1) * TILESIZE
     big_image_y = (len(set_y) + 1) * TILESIZE
 
+    # Generating 4 big images, 1 original, 1 prediction, 1 labels and 1 sen2cor
     big_orig = np.zeros((big_image_x, big_image_y, 3))
     big_pred = np.zeros((big_image_x, big_image_y))
     big_label = np.zeros((big_image_x, big_image_y))

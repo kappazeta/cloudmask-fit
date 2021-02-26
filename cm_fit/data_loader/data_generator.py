@@ -13,8 +13,8 @@ class DataGenerator(Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, shuffle=True, png_form=False):
         """ Initialization """
         self.path = path_input
-        self.stds = [0.00044, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.033, 0.025, 0.021, 0.0049]
-        self.means = [0.0010, 0.02, 0.02, 0.02, 0.025, 0.033, 0.038, 0.038, 0.03, 0.022, 0.01]
+        self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
+        self.means = [0.0009, 0.02, 0.02, 0.02, 0.02, 0.041, 0.047, 0.045, 0.06, 0.03, 0.03, 0.022, 0.015]
         self.min_v = []
         self.max_v = []
         self.list_indices = list_indices

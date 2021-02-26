@@ -27,8 +27,10 @@ def main():
     # Parse command-line arguments.
     p = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
-    p.add_argument("-train", "--train", action="store_true", dest="train", default=False,
+    p.add_argument("-train", "--train", action="store", dest="train", default=False,
                    help="Train a new model.")
+    p.add_argument("-pretrain", "--pretrain", action="store", dest="pretrain", default=False,
+                   help="Pretrained weights.")
     p.add_argument("-predict", "--predict", action="store", dest="predict", default=None,
                    help="Path to predict on.")
     p.add_argument("-w", "--weights", action="store", dest="weights", default=None,
@@ -80,7 +82,7 @@ def main():
             cmf = CMInit(png_mode=True)
             cmf.load_config(args.path_config)
             cmf.split()
-            cmf.train()
+            cmf.train(args.train)
         elif args.dev_mode:
             cmf = CMInit()
             cmf.load_config(args.path_config)
@@ -93,7 +95,10 @@ def main():
                 cmf.validation()
             elif args.train:
                 cmf.split()
-                cmf.train()
+                if args.pretrain:
+                    cmf.train(args.train, args.pretrain)
+                else:
+                    cmf.train(args.train)
             elif args.test:
                 cmf.test(args.test, args.weights)
         else:
@@ -103,7 +108,7 @@ def main():
                 cmf.predict(args.predict, args.weights)
             elif args.train:
                 cmf.split()
-                cmf.train()
+                cmf.train(args.train)
 
     except Exception as e:
         if log is not None:

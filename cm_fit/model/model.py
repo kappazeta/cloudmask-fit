@@ -49,7 +49,7 @@ class CMModel(log.Loggable):
 
         self.path_checkpoint = ''
 
-    def construct(self, width, height, num_channels, num_categories):
+    def construct(self, width, height, num_channels, num_categories, pretrained_weights=False):
         """
         Just an abstract placeholder function to be overloaded by subclasses.
         :param width: Width of a single sample (must be an odd number).

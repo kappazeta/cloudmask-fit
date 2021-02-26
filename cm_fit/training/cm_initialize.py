@@ -308,7 +308,7 @@ class CMInit(ulog.Loggable):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
         return gbytes
 
-    def train(self):
+    def train(self, trainer_name='unet', pretrained_weights=False):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
@@ -326,14 +326,14 @@ class CMInit(ulog.Loggable):
         self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
 
-        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/unet_init_")
+        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/"+trainer_name+"_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
         self.model.set_batch_size(self.batch_size_train)
         self.model.set_learning_rate(self.learning_rate)
 
         # Construct and compile the model.
-        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), pretrained_weights)
         self.model.model.summary()
         self.model.compile()
 
@@ -342,8 +342,10 @@ class CMInit(ulog.Loggable):
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
         if not self.png_iterator:
-            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 6)
+            #train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 6)
             val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
+            #print(train_std, train_means, train_min, train_max)
+            print(val_std, val_means, val_min, val_max)
 
         # Fit the model, storing weights in checkpoints/.
         history = self.model.fit(training_generator,
