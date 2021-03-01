@@ -10,7 +10,7 @@ from tensorflow.python.keras.utils.data_utils import Sequence
 
 
 class DataGenerator(Sequence):
-    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, shuffle=True, png_form=False):
+    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, shuffle=True, png_form=False):
         """ Initialization """
         self.path = path_input
         self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
@@ -25,6 +25,7 @@ class DataGenerator(Sequence):
         else:
             self.features = features
         self.dim = dim
+        self.label_set = label_set
         self.num_classes = num_classes
         self.shuffle = shuffle
         self.png_form = png_form
@@ -72,7 +73,7 @@ class DataGenerator(Sequence):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     try:
-                        label = np.asarray(root['Label'])
+                        label = np.asarray(root[self.label_set])
                         unique_elements, counts_elements = np.unique(label, return_counts=True)
                         curr_dic = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
                         for j in range(len(unique_elements)):
@@ -161,7 +162,7 @@ class DataGenerator(Sequence):
                     # data_bands *= (255.0/(np.max(np.abs(data_bands))))
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     try:
-                        label = np.asarray(root['Label'])
+                        label = np.asarray(root[self.label_set])
                         y = np_utils.to_categorical(label, self.num_classes)
                         sen2cor_cc = np.asarray(root['S2CC'])
                         sen2cor_cs = np.asarray(root['S2CS'])
@@ -221,7 +222,7 @@ class DataGenerator(Sequence):
                 with nc.Dataset(file, 'r') as root:
                     data_bands = [np.asarray(root[f]) for f in self.features]
                     try:
-                        label = np.asarray(root['Label'])
+                        label = np.asarray(root[self.label_set])
                     except:
                         print("Label for " + file + " not found")
                         print(data_bands[0].shape)
@@ -266,7 +267,7 @@ class DataGenerator(Sequence):
                         data_bands = [(np.asarray(root[f]) - self.means[i]) / self.stds[i] for i, f in
                                       enumerate(self.features)]
                     try:
-                        label = np.asarray(root['Label'])
+                        label = np.asarray(root[self.label_set])
                         unique_lbl = np.unique(label)
 
                         y[i] = np_utils.to_categorical(label, self.num_classes)
@@ -287,7 +288,7 @@ class DataGenerator(Sequence):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     try:
-                        label = np.asarray(root['Label'])
+                        label = np.asarray(root[self.label_set])
                         y[i] = np_utils.to_categorical(label, self.num_classes)
                     except:
                         print("Label for " + file + " not found")
@@ -339,7 +340,7 @@ class TestDataGenerator(keras.utils.Sequence):
                 with nc.Dataset(file, 'r') as root:
                     data_bands = [np.asarray(root[f]) for f in self.features]
                     try:
-                        label = np.asarray(root['Label'])
+                        label = np.asarray(root[self.label_set])
                         y[i] = label
                         # data_bands = np.stack(data_bands)
                         # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))

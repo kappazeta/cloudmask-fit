@@ -73,6 +73,7 @@ class CMInit(ulog.Loggable):
         self.plots_path = self.experiment_res_folder + "/plots"
         self.pixel_window_size = 9
         self.features = []
+        self.label_set = "Label"
 
         self.learning_rate = 1E-4
         self.batch_size_train = 16
@@ -122,6 +123,7 @@ class CMInit(ulog.Loggable):
         self.batch_size_train = d["train"]["batch_size"]
         self.batch_size_predict = d["predict"]["batch_size"]
         self.num_epochs = d["train"]["num_epochs"]
+        self.label_set = d["input"]["label_set"]
         self.create_folders()
 
     def create_folders(self):
@@ -314,6 +316,7 @@ class CMInit(ulog.Loggable):
         """
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
+        self.params["label_set"] = self.label_set
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -377,6 +380,7 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
+        self.params["label_set"] = self.label_set
 
         # Read splits again
         path_splits = os.path.abspath(self.meta_data_path+"/splits.json")
@@ -461,6 +465,7 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
+        self.params["label_set"] = self.label_set
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -545,6 +550,7 @@ class CMInit(ulog.Loggable):
     def run_stats(self):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
+        self.params["label_set"] = self.label_set
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
