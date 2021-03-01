@@ -526,6 +526,7 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
+        self.params["label_set"] = self.label_set
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
