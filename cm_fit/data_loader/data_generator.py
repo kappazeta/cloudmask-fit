@@ -111,16 +111,7 @@ class DataGenerator(Sequence):
                     # data_bands *= 255.0
                     # data_bands *= (255.0/(np.max(np.abs(data_bands))))
                     data_bands = np.rollaxis(data_bands, 0, 3)
-                    '''
-                    try:
-                        sen2cor_cc = np.asarray(root['S2CC'])
-                        sen2cor_cs = np.asarray(root['S2CS'])
-                        sen2cor_scl = np.asarray(root['SCL'])
-                    except:
-                        sen2cor_cc = np.asarray(root['S2CC'])
-                        sen2cor_cs = np.asarray(root['S2CS'])
-                        sen2cor_scl = np.asarray(root['SCL'])
-                    '''
+
                     # img = Image.fromarray(data_bands, 'RGB')
                     file_name = file.split(".")[0].split("/")[-1]
                     # img.save(path_prediction+"/"+file_name+"orig.png")
@@ -128,6 +119,19 @@ class DataGenerator(Sequence):
                     if not os.path.exists(path_prediction + "/" + file_name):
                         os.mkdir(path_prediction + "/" + file_name)
 
+                    try:
+                        sen2cor_cc = np.asarray(root['S2CC'])
+                        sen2cor_cs = np.asarray(root['S2CS'])
+                        sen2cor_scl = np.asarray(root['SCL'])
+                        sen2cor_scl = sen2cor_scl * 63 + 3
+                        sen2cor_scl[sen2cor_scl > 255] = 20
+
+                        sen2cor_scl = sen2cor_scl.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(sen2cor_scl)
+                        im.save(path_prediction + "/" + file_name + "/SCL.png")
+                    except:
+                        print("Sen2Cor not found")
                     # Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
                     unique_before = np.unique(data_bands)
                     # data_bands *= 255

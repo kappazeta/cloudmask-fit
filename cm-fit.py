@@ -101,6 +101,8 @@ def main():
                     cmf.train(args.train)
             elif args.test:
                 cmf.test(args.test, args.weights)
+            elif args.statistic:
+                cmf.run_stats()
         else:
             cmf = CMFit()
             cmf.load_config(args.path_config)
