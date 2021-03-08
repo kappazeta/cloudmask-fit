@@ -132,6 +132,17 @@ class DataGenerator(Sequence):
                         im.save(path_prediction + "/" + file_name + "/SCL.png")
                     except:
                         print("Sen2Cor not found")
+                    try:
+                        label = np.asarray(root[self.label_set])
+                        y = np_utils.to_categorical(label, self.num_classes)
+                        label = label * 63 + 3
+                        label[label > 255] = 20
+                        label = label.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(label)
+                        im.save(path_prediction + "/" + file_name + "/label.png")
+                    except:
+                        print("Label not found")
                     # Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
                     unique_before = np.unique(data_bands)
                     # data_bands *= 255

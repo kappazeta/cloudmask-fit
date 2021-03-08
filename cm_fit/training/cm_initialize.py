@@ -583,6 +583,8 @@ class CMInit(ulog.Loggable):
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
+        train_generator = DataGenerator(dictionary['train'], **self.params)
+        train_generator.store_orig(dictionary['train'], self.prediction_path)
         validation_generator = DataGenerator(dictionary['val'], **self.params)
         validation_generator.store_orig(dictionary['val'], self.prediction_path)
 
