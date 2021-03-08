@@ -92,7 +92,7 @@ def main():
             if args.predict is not None:
                 cmf.predict(args.predict, args.weights)
             elif args.validate:
-                cmf.validation()
+                cmf.validation(args.validate, args.weights)
             elif args.train:
                 cmf.split()
                 if args.pretrain:

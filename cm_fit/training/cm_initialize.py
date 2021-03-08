@@ -425,7 +425,7 @@ class CMInit(ulog.Loggable):
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
 
-    def validation(self):
+    def validation(self, datadir, path_weights):
         """
         Validate predicted data
         Create folder with substracted images
@@ -433,14 +433,38 @@ class CMInit(ulog.Loggable):
         :param path_original: Path to the input data cube.
         :param path_predicted: Path to the model weights.
         """
-        # Read splits again
-        path_splits = os.path.abspath(self.meta_data_path+"/splits.json")
-        with open(path_splits, "r") as fo:
-            dictionary = json.load(fo)
+        self.get_model_by_name(self.model_arch)
 
-        valid_generator = DataGenerator(dictionary['val'], **self.params)
-        valid_generator.get_labels(dictionary['val'], self.prediction_path, self.validation_path, self.classes)
-        predictions = self.model.predict(valid_generator)
+        # Propagate configuration parameters.
+        self.model.set_batch_size(self.batch_size_predict)
+
+        # Construct and compile the model.
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.compile()
+
+        # Load model weights.
+        self.model.load_weights(self.checkpoints_path + "/" + path_weights)
+
+        probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
+        class_mask = np.zeros((self.dim[0], self.dim[1]), dtype=np.uint8)
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_predict
+        self.params["shuffle"] = False
+        self.params["label_set"] = self.label_set
+
+        tile_paths = []
+
+        for subfolder in os.listdir(datadir):
+            tile_paths.append(os.path.join(datadir, subfolder))
+        test_generator = DataGenerator(tile_paths, **self.params)
+        test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
+        # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
+        test_generator.store_orig(tile_paths, self.validation_path)
+
+        predictions = self.model.predict(test_generator)
+        y_pred = np.argmax(predictions, axis=3)
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(tile_paths[i], prediction, y_pred[i], self.validation_path)
 
         """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
         self.save_to_img("output/model_v1/prediction.png", class_mask)

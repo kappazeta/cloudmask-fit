@@ -239,11 +239,6 @@ class DataGenerator(Sequence):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     data_bands = [np.asarray(root[f]) for f in self.features]
-                    try:
-                        label = np.asarray(root[self.label_set])
-                    except:
-                        print("Label for " + file + " not found")
-                        print(data_bands[0].shape)
                     data_bands = np.stack(data_bands)
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
