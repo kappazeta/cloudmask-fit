@@ -67,7 +67,7 @@ class DataGenerator(Sequence):
             np.random.shuffle(self.indexes)
 
     def get_label_stat(self, list_indices_temp, classes):
-        overall_stat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5:0}
+        overall_stat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         per_image_stat = []
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -87,8 +87,11 @@ class DataGenerator(Sequence):
                     file_name = file.split(".")[0].split("/")[-1]
                     # img.save(path_prediction+"/"+file_name+"orig.png")
 
-        overall_stat = {k: v / sum(overall_stat.values()) for k, v in overall_stat.items()}
-        return overall_stat, per_image_stat
+        if sum(overall_stat.values()) == 0:
+            return overall_stat, per_image_stat
+        else:
+            overall_stat = {k: v / sum(overall_stat.values()) for k, v in overall_stat.items()}
+            return overall_stat, per_image_stat
 
     def store_orig(self, list_indices_temp, path_prediction):
         """Save labels to folder"""

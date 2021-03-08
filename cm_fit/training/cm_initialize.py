@@ -47,11 +47,11 @@ class CMInit(ulog.Loggable):
             },
             "train": {
                 "learning_rate": 1E-4,
-                "batch_size": 16,
+                "batch_size": 6,
                 "num_epochs": 10
             },
             "predict": {
-                "batch_size": 16
+                "batch_size": 1
             }
         }
 
@@ -577,6 +577,7 @@ class CMInit(ulog.Loggable):
     def get_origin_im(self):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
+        self.params["label_set"] = self.label_set
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
