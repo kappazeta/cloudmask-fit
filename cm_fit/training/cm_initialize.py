@@ -390,6 +390,7 @@ class CMInit(ulog.Loggable):
         valid_generator = DataGenerator(dictionary['val'], **self.params)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
         val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
+        valid_generator.store_orig(dictionary['val'], self.prediction_path)
         length = dictionary['total']
         temp_list = dictionary['filepaths'][0:length//20]
         #out = valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
