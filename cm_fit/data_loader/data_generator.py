@@ -132,6 +132,36 @@ class DataGenerator(Sequence):
                         im.save(path_prediction + "/" + file_name + "/SCL.png")
                     except:
                         print("Sen2Cor not found")
+
+                    try:
+                        fmask = np.asarray(root['FMC'])
+                        fmask = fmask * 63 + 3
+                        fmask[fmask > 255] = 20
+                        fmask = fmask.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(fmask)
+                        im.save(path_prediction + "/" + file_name + "/FMC.png")
+                    except:
+                        print("FMASK not found")
+
+                    try:
+                        s2cloudls = np.asarray(root['SS2C'])
+                        s2cloudl_cloud = np.asarray(root['SS2CC'])
+                        s2cloudls = s2cloudls * 63 + 3
+                        s2cloudls[s2cloudls > 255] = 20
+
+                        s2cloudls = s2cloudls.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(s2cloudls)
+                        im.save(path_prediction + "/" + file_name + "/SS2C_sinergise.png")
+
+                        s2cloudl_cloud = s2cloudl_cloud * 255
+                        s2cloudl_cloud = s2cloudl_cloud.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(s2cloudl_cloud)
+                        im.save(path_prediction + "/" + file_name + "/SS2CC_sinergise_cloudonly.png")
+                    except:
+                        print("sinergise not found")
                     try:
                         label = np.asarray(root[self.label_set])
                         y = np_utils.to_categorical(label, self.num_classes)

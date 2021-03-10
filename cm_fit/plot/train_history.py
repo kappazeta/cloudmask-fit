@@ -50,7 +50,7 @@ def draw_4lines(history, set, results_folder, classes):
     return
 
 
-def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):
+def plot_confusion_matrix_custom(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalized=True`.
@@ -65,9 +65,9 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
            # ... and label them with the respective list entries
            xticklabels=class_list, yticklabels=class_list,
             )
-    plt.xlabel('Predicted label', fontsize=32)
-    plt.ylabel('True label', fontsize=32)
-    ax.set_title(title, pad=30, fontsize=32)
+    plt.xlabel('Predicted label', fontsize=36)
+    plt.ylabel('True label', fontsize=36)
+    ax.set_title(title, pad=30, fontsize=40)
 
     # Turn spines off.
     for edge, spine in ax.spines.items():
@@ -75,11 +75,11 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor", fontsize=32)
-    plt.setp(ax.get_yticklabels(), fontsize=32)
+             rotation_mode="anchor", fontsize=36)
+    plt.setp(ax.get_yticklabels(), fontsize=36)
 
     # Loop over data dimensions and create text annotations.
-    fmt = '.3f' if normalized else 'd'
+    fmt = '.2f' if normalized else 'd'
     thresh = cm.max() / 2.
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
