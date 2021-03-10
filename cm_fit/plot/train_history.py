@@ -50,7 +50,7 @@ def draw_4lines(history, set, results_folder, classes):
     return
 
 
-def plot_confusion_matrix_custom(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalized=True`.

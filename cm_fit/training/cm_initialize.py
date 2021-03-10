@@ -22,8 +22,7 @@ from cm_fit.plot.train_history import draw_history_plots
 from tensorflow.keras.utils import Sequence
 from keras.callbacks import ModelCheckpoint
 from shutil import copyfile
-from cm_fit.plot.train_history import plot_confusion_matrix_custom, draw_4lines
-from sklearn.metrics import plot_confusion_matrix
+from cm_fit.plot.train_history import plot_confusion_matrix, draw_4lines
 
 
 class CMInit(ulog.Loggable):
@@ -407,13 +406,13 @@ class CMInit(ulog.Loggable):
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
-        plot_confusion_matrix_custom(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
+        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
 
         for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
-            plot_confusion_matrix_custom(matrix, ["Other", self.classes[i]], self.experiment_name + ": cf_matrix "+self.classes[i], normalized=True)
+            plot_confusion_matrix(matrix, ["Other", self.classes[i]], self.experiment_name + ": cf_matrix "+self.classes[i], normalized=True)
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_'+self.classes[i]+'.png'))
             plt.close()
 
@@ -514,13 +513,13 @@ class CMInit(ulog.Loggable):
         y_pred = y_pred.flatten()
         y_true = y_true.flatten()
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true, y_pred, self.classes)
-        plot_confusion_matrix_custom(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
+        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot_test.png'))
         plt.close()
 
         for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
-            plot_confusion_matrix_custom(matrix, ["Other", self.classes[i]],
+            plot_confusion_matrix(matrix, ["Other", self.classes[i]],
                                   self.experiment_name + ": cf_matrix " + self.classes[i], normalized=True)
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_' + self.classes[i] + '_test.png'))
             plt.close()
