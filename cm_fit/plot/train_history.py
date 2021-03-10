@@ -65,8 +65,8 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
            # ... and label them with the respective list entries
            xticklabels=class_list, yticklabels=class_list,
             )
-    plt.xlabel('Predicted label', fontsize=36)
-    plt.ylabel('True label', fontsize=36)
+    plt.xlabel('Predicted label', fontsize=40)
+    plt.ylabel('True label', fontsize=40)
     ax.set_title(title, pad=30, fontsize=40)
 
     # Turn spines off.
@@ -75,8 +75,8 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor", fontsize=36)
-    plt.setp(ax.get_yticklabels(), fontsize=36)
+             rotation_mode="anchor", fontsize=40)
+    plt.setp(ax.get_yticklabels(), fontsize=40)
 
     # Loop over data dimensions and create text annotations.
     fmt = '.2f' if normalized else 'd'
