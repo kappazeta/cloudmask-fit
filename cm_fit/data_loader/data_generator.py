@@ -15,8 +15,8 @@ class DataGenerator(Sequence):
         self.path = path_input
         self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
         self.means = [0.0009, 0.02, 0.02, 0.02, 0.02, 0.041, 0.047, 0.045, 0.06, 0.03, 0.03, 0.022, 0.015]
-        self.min_v = []
-        self.max_v = []
+        self.min_v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.max_v = [0.0039, 0.2982, 0.3147, 0.2900, 0.2729, 0.2658, 0.2928, 0.2498, 0.26781, 0.2804, 0.2509, 0.2535, 0.0823]
         self.list_indices = list_indices
         self.total_length = len(self.list_indices)
         self.batch_size = batch_size
@@ -307,7 +307,7 @@ class DataGenerator(Sequence):
                         data_bands = [(np.asarray(root[f]))*1/255 for i, f in
                                       enumerate(self.features)]
                     else:
-                        data_bands = [(np.asarray(root[f]) - self.means[i]) / self.stds[i] for i, f in
+                        data_bands = [(np.asarray(root[f]) - self.min_v[i]) / (self.max_v[i]-self.min_v[i]) for i, f in
                                       enumerate(self.features)]
                     try:
                         label = np.asarray(root[self.label_set])
