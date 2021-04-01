@@ -33,7 +33,7 @@ class CMModel(log.Loggable):
 
         self.input_shape = (512, 512, 10)
         self.output_shape = (10,)
-        self.model = Unet(input_size=(512, 512, 11))
+        self.model = Unet(input_size=(512, 512, 13))
 
         self.learning_rate = 0.001
         self.num_train_samples = 0
@@ -157,15 +157,15 @@ class CMModel(log.Loggable):
 
     @staticmethod
     def filtered_dice_loss(y_true, y_pred):
+        condition = K.greater(K.sum(y_true), 0)
+        intersection = K.sum((1 - y_true) * (1 - y_pred))
+        union = K.sum((1 - y_true) + (1 - y_pred))
+        when_zero_loss = 1 - intersection / (intersection - union + K.epsilon())
 
-        if K.sum(y_true) == 0:
-            intersection= K.sum((1-y_true)*(1-y_pred))
-            union = K.sum((1-y_true)+(1-y_pred))
-            return 1 - intersection/(intersection - union + K.epsilon())
-        else:
-            intersection = K.sum(y_true * y_pred)
-            union = K.sum(y_true + y_pred)
-            return 1 - intersection / (intersection - union + K.epsilon())
+        intersection = K.sum(y_true * y_pred)
+        union = K.sum(y_true + y_pred)
+        loss = 1 - intersection / (intersection - union + K.epsilon())
+        return K.switch(condition, loss, when_zero_loss)
 
     @staticmethod
     def get_confusion_matrix(y_true, y_pred, classes):
