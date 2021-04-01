@@ -67,7 +67,7 @@ class CMModel(log.Loggable):
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.model.compile(optimizer=l_op, loss=self.dice_loss, #self.dice_loss, #'categorical_crossentropy',
+        self.model.compile(optimizer=l_op, loss=self.filtered_dice_loss, #self.dice_loss, #self.dice_loss, #'categorical_crossentropy',
                            metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                     self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
         print("new optimizer")
@@ -154,6 +154,18 @@ class CMModel(log.Loggable):
             intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
             return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
         return 1 - dice_coef(y_true, y_pred)
+
+    @staticmethod
+    def filtered_dice_loss(y_true, y_pred):
+
+        if K.sum(y_true) == 0:
+            intersection= K.sum((1-y_true)*(1-y_pred))
+            union = K.sum((1-y_true)+(1-y_pred))
+            return 1 - intersection/(intersection - union + K.epsilon())
+        else:
+            intersection = K.sum(y_true * y_pred)
+            union = K.sum(y_true + y_pred)
+            return 1 - intersection / (intersection - union + K.epsilon())
 
     @staticmethod
     def get_confusion_matrix(y_true, y_pred, classes):
