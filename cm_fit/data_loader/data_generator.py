@@ -307,8 +307,10 @@ class DataGenerator(Sequence):
                         data_bands = [(np.asarray(root[f]))*1/255 for i, f in
                                       enumerate(self.features)]
                     else:
-                        data_bands = [(np.asarray(root[f]) - self.min_v[i]) / (self.max_v[i]-self.min_v[i]) for i, f in
-                                      enumerate(self.features)]
+                        #data_bands = [(np.asarray(root[f]) - self.min_v[i]) / (self.max_v[i]-self.min_v[i]) for i, f in
+                        #              enumerate(self.features)]
+                        data_bands = [(np.asarray(root[f]) - self.means[i]) / (self.stds[i]) for i, f
+                                      in enumerate(self.features)]
                     try:
                         label = np.asarray(root[self.label_set])
                         unique_lbl = np.unique(label)
