@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
 from cm_fit.model.architectures import ARCH_MAP
-from cm_fit.model.unet_original import Unet
 from cm_fit.data_loader.data_generator import DataGenerator
 from cm_fit.data_loader.utils import generate_splits
 from cm_fit.training.utils import set_normalization
@@ -75,6 +74,7 @@ class CMInit(ulog.Loggable):
         self.pixel_window_size = 9
         self.features = []
         self.label_set = "Label"
+        self.normalization = "std"
 
         self.learning_rate = 1E-4
         self.batch_size_train = 16
@@ -125,6 +125,7 @@ class CMInit(ulog.Loggable):
         self.batch_size_predict = d["predict"]["batch_size"]
         self.num_epochs = d["train"]["num_epochs"]
         self.label_set = d["input"]["label_set"]
+        self.normalization = d["input"]["normalization"]
         self.create_folders()
 
     def create_folders(self):
@@ -318,6 +319,7 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -382,6 +384,7 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         # Read splits again
         path_splits = os.path.abspath(self.meta_data_path+"/splits.json")
@@ -455,6 +458,7 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         tile_paths = []
 
@@ -495,6 +499,7 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -557,6 +562,7 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_predict
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -582,6 +588,7 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
@@ -608,6 +615,7 @@ class CMInit(ulog.Loggable):
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:

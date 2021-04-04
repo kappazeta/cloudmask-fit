@@ -10,7 +10,7 @@ from tensorflow.python.keras.utils.data_utils import Sequence
 
 
 class DataGenerator(Sequence):
-    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, shuffle=True, png_form=False):
+    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, normalization, shuffle=True, png_form=False):
         """ Initialization """
         self.path = path_input
         self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
@@ -20,6 +20,7 @@ class DataGenerator(Sequence):
         self.list_indices = list_indices
         self.total_length = len(self.list_indices)
         self.batch_size = batch_size
+        self.normalization = normalization
         if png_form:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
         else:
@@ -307,10 +308,12 @@ class DataGenerator(Sequence):
                         data_bands = [(np.asarray(root[f]))*1/255 for i, f in
                                       enumerate(self.features)]
                     else:
-                        data_bands = [(np.asarray(root[f]) - self.min_v[i]) / (self.max_v[i]-self.min_v[i]) for i, f in
-                                      enumerate(self.features)]
-                        #data_bands = [(np.asarray(root[f]) - self.means[i]) / (self.stds[i]) for i, f
-                        #              in enumerate(self.features)]
+                        if self.normalization == "minmax":
+                            data_bands = [(np.asarray(root[f]) - self.min_v[i]) / (self.max_v[i]-self.min_v[i]) for i, f in
+                                          enumerate(self.features)]
+                        else:
+                            data_bands = [(np.asarray(root[f]) - self.means[i]) / (self.stds[i]) for i, f
+                                          in enumerate(self.features)]
                     try:
                         label = np.asarray(root[self.label_set])
                         unique_lbl = np.unique(label)

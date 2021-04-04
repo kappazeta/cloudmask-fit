@@ -40,6 +40,7 @@ class CMModel(log.Loggable):
         self.num_val_samples = 0
         self.batch_size = 0
         self.num_epochs = 3
+        self.class_weights = [1,1,5.7,3.6,1.3,1]
 
         # Accuracy, precision, recall, f1, iou
         self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy(), "categorical_acc": tf.keras.metrics.CategoricalAccuracy(),
@@ -164,6 +165,38 @@ class CMModel(log.Loggable):
         union = K.sum(y_true + y_pred)
         loss = 1 - 2*intersection / (union + K.epsilon())
         return loss
+
+
+    @staticmethod
+    def cat_dice_loss(y_true, y_pred):
+        def weighted_categorical_crossentropy(y_true, y_pred):
+            # weights = K.variable([0.5,2.0,0.0])
+            weights = K.variable([1,1,5.7,3.6,1.3,1])
+
+            # scale predictions so that the class probas of each sample sum to 1
+            y_pred /= K.sum(y_pred, axis=-1, keepdims=True)
+            # clip to prevent NaN's and Inf's
+            y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
+            # calc
+            loss = y_true * K.log(y_pred) * weights
+            loss = -K.sum(loss, -1)
+
+            return loss
+
+        def dice_loss(y_true, y_pred):
+            def dice_coef(y_true, y_pred, smooth=1):
+                """
+                Dice = (2*|X & Y|)/ (|X|+ |Y|)
+                     =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+                ref: https://arxiv.org/pdf/1606.04797v1.pdf
+                """
+                intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+                return (2. * intersection + smooth) / (
+                            K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
+
+            return 1 - dice_coef(y_true, y_pred)
+
+        return weighted_categorical_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
 
     @staticmethod
     def get_confusion_matrix(y_true, y_pred, classes):
