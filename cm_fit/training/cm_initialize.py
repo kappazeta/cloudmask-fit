@@ -316,6 +316,7 @@ class CMInit(ulog.Loggable):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
+        # Put self.params to function
         self.params["features"] = self.features
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
@@ -348,9 +349,9 @@ class CMInit(ulog.Loggable):
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
         if not self.png_iterator:
-            #train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 6)
+            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 6)
             val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
-            #print(train_std, train_means, train_min, train_max)
+            print(train_std, train_means, train_min, train_max)
             print(val_std, val_means, val_min, val_max)
 
         # Fit the model, storing weights in checkpoints/.

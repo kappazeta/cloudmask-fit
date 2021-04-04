@@ -1,23 +1,25 @@
 {
   "version": 2,
-  "experiment_name": "test_folders1",
+  "experiment_name": "full_with_april",
   "input": {
-    "data_dir": "data/data_model_1/"
+    "data_dir": "data/merged_l2a_0204/",
+    "label_set": "Label",
+    "normalization": "minmax"
   },
   "split": {
     "ratio": {
-      "test": 0.1,
+      "test": 0,
       "val": 0.2
     }
   },
   "model": {
     "architecture": "Unet",
-    "features": ["AOT", "B02", "B03", "B04", "B05", "B06", "B08", "B8A", "B11", "B12", "WVP"],
+    "features": ["AOT", "B01", "B02", "B03", "B04", "B05", "B06", "B08", "B8A", "B09", "B11", "B12", "WVP"],
     "pixel_window_size": 9
   },
   "train": {
     "learning_rate": 0.0001,
-    "batch_size": 2,
+    "batch_size": 1,
     "num_epochs": 2
   },
   "predict": {
