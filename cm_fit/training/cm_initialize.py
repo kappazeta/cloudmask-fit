@@ -89,6 +89,7 @@ class CMInit(ulog.Loggable):
                        'shuffle': True}
 
         self.model = None
+        self.loss_name = "dice_loss"
         self.splits = {}
         if png_mode:
             self.png_iterator = True
@@ -126,6 +127,7 @@ class CMInit(ulog.Loggable):
         self.num_epochs = d["train"]["num_epochs"]
         self.label_set = d["input"]["label_set"]
         self.normalization = d["input"]["normalization"]
+        self.loss_name = d["train"]["loss"]
         self.create_folders()
 
     def create_folders(self):
@@ -342,7 +344,7 @@ class CMInit(ulog.Loggable):
         # Construct and compile the model.
         self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), pretrained_weights)
         self.model.model.summary()
-        self.model.compile()
+        self.model.compile(self.loss_name)
 
         size = self.get_model_memory_usage(self.batch_size_train, self.model.model)
 

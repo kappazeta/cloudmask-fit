@@ -61,16 +61,34 @@ class CMModel(log.Loggable):
         """
         raise NotImplementedError()
 
-    def compile(self):
+    def compile(self, loss_name):
         """
         Compile the model for the Adam optimizer.
         :return:
         """
         with tf.name_scope('Optimizer'):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.model.compile(optimizer=l_op, loss=self.dice_loss,#self.flattened_dice_loss, #self.dice_loss, #'categorical_crossentropy',
-                           metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
-                                    self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
+
+        if loss_name == "dice_loss":
+            self.model.compile(optimizer=l_op, loss=self.dice_loss,
+                               metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+                                        self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
+        elif loss_name == "categorical_crossentropy":
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+                               metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+                                        self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
+        elif loss_name == "cat_dice_loss":
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+                               metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+                                        self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
+        elif loss_name == "weighted_loss":
+            self.model.compile(optimizer=l_op, loss=self.weighted_dice_loss,
+                               metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+                                        self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
+        else:
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+                               metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
+                                        self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1']])
         print("new optimizer")
         self.model.summary()
 
@@ -157,14 +175,19 @@ class CMModel(log.Loggable):
         return 1 - dice_coef(y_true, y_pred)
 
     @staticmethod
-    def flattened_dice_loss(y_true, y_pred):
-        y_true_f = K.flatten(y_true)
-        y_pred_f = K.flatten(y_pred)
-
-        intersection = K.sum(y_true_f * y_pred_f)
-        union = K.sum(y_true + y_pred)
-        loss = 1 - 2*intersection / (union + K.epsilon())
-        return loss
+    def weighted_dice_loss(y_true, y_pred):
+        def dice_coef(y_true, y_pred, smooth=1):
+            """
+            Dice = (2*|X & Y|)/ (|X|+ |Y|)
+                 =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+            ref: https://arxiv.org/pdf/1606.04797v1.pdf
+            """
+            intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+            return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
+        loss = dice_coef(y_true, y_pred)
+        weights = K.variable([1, 1, 5.7, 3.6, 1.3, 1])
+        weighted_loss = loss * K.sum(y_true * weights, axis=-1)
+        return weighted_loss
 
 
     @staticmethod
@@ -215,7 +238,7 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", mode='min', patience=50)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_custom_f1", mode='max', patience=50)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
@@ -226,7 +249,7 @@ class CMModel(log.Loggable):
                 callbacks.append(model_checkpoint)
 
             lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_loss", factor=0.5, patience=30, mode='min', min_delta=0.0001, cooldown=0, min_lr=0
+                monitor="val_custom_f1", factor=0.5, patience=30, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
 
