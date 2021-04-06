@@ -194,7 +194,7 @@ class CMModel(log.Loggable):
     def cat_dice_loss(y_true, y_pred):
         def weighted_categorical_crossentropy(y_true, y_pred):
             # weights = K.variable([0.5,2.0,0.0])
-            weights = K.variable([1,1,5.7,3.6,1.3,1])
+            weights = K.constant([1,1,5.7,3.6,1.3,1])
 
             # scale predictions so that the class probas of each sample sum to 1
             y_pred /= K.sum(y_pred, axis=-1, keepdims=True)
