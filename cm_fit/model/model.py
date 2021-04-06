@@ -185,7 +185,7 @@ class CMModel(log.Loggable):
             intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
             return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
         loss = dice_coef(y_true, y_pred)
-        weights = K.variable([1, 1, 5.7, 3.6, 1.3, 1])
+        weights = K.constant([1, 1, 5.7, 3.6, 1.3, 1])
         weighted_loss = loss * K.sum(y_true * weights, axis=-1)
         return weighted_loss
 
