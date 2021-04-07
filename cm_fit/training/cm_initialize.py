@@ -375,7 +375,7 @@ class CMInit(ulog.Loggable):
 
         # Construct and compile the model.
         self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
-        self.model.compile()
+        self.model.compile(self.loss_name)
 
         # Load model weights.
         self.model.load_weights(self.checkpoints_path+"/"+path_weights)
@@ -450,7 +450,7 @@ class CMInit(ulog.Loggable):
 
         # Construct and compile the model.
         self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
-        self.model.compile()
+        self.model.compile(self.loss_name)
 
         # Load model weights.
         self.model.load_weights(self.checkpoints_path + "/" + path_weights)
@@ -490,7 +490,7 @@ class CMInit(ulog.Loggable):
 
         # Construct and compile the model.
         self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
-        self.model.compile()
+        self.model.compile(self.loss_name)
 
         # Load model weights.
         self.model.load_weights(self.checkpoints_path + "/" + path_weights)
@@ -553,7 +553,7 @@ class CMInit(ulog.Loggable):
 
         # Construct and compile the model.
         self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
-        self.model.compile()
+        self.model.compile(self.loss_name)
 
         # Load model weights.
         self.model.load_weights(path_weights)
