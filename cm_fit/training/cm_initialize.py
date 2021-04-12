@@ -577,7 +577,7 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         test_generator = DataGenerator(dictionary['val'], **self.params)
-        test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 30)
+        #test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 30)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
         test_generator.store_orig(dictionary['val'], self.prediction_path)
 
