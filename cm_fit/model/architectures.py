@@ -18,7 +18,7 @@
 import tensorflow as tf
 
 from cm_fit.model.model import CMModel
-from cm_fit.model.deep_unet import DeepUnet
+from cm_fit.model.nested_unet import NestedUnet
 
 
 class CMMA1(CMModel):
@@ -248,5 +248,5 @@ ARCH_MAP = {
     "a1": CMMA1,
     "a2": CMMA2,
     "Unet": Unet,
-    "DeepUnet": DeepUnet
+    "NestedUnet": NestedUnet
 }
