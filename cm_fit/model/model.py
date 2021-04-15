@@ -45,7 +45,7 @@ class CMModel(log.Loggable):
         # Accuracy, precision, recall, f1, iou
         self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy(), "categorical_acc": tf.keras.metrics.CategoricalAccuracy(),
                             "recall": tf.keras.metrics.Recall(), "precision": tf.keras.metrics.Precision(),
-                            "iou": tf.keras.metrics.MeanIoU(num_classes=5), 'f1': self.custom_f1, "mean_iou": self.mean_iou}
+                            "iou": tf.keras.metrics.MeanIoU(num_classes=6), 'f1': self.custom_f1}
         self.monitored_metric = self.METRICS_SET["iou"]
 
         self.path_checkpoint = ''
@@ -73,27 +73,27 @@ class CMModel(log.Loggable):
             self.model.compile(optimizer=l_op, loss=self.dice_loss,
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
-                                        self.METRICS_SET['mean_iou']])
+                                        self.METRICS_SET['iou']])
         elif loss_name == "categorical_crossentropy":
             self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
-                                        self.METRICS_SET['mean_iou']])
+                                        self.METRICS_SET['iou']])
         elif loss_name == "cat_dice_loss":
             self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
-                                        self.METRICS_SET['mean_iou']])
+                                        self.METRICS_SET['iou']])
         elif loss_name == "weighted_loss":
             self.model.compile(optimizer=l_op, loss=self.weighted_dice_loss,
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
-                                        self.METRICS_SET['mean_iou']])
+                                        self.METRICS_SET['iou']])
         else:
             self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
-                                        self.METRICS_SET['f1']])
+                                        self.METRICS_SET['iou']])
         print("new optimizer")
         self.model.summary()
 
@@ -205,18 +205,6 @@ class CMModel(log.Loggable):
             intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
             return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
         return 0.5 * K.categorical_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
-
-    @staticmethod
-    def mean_iou(y_true, y_pred):
-        prec = []
-        for t in np.arange(0.5, 1.0, 0.05):
-            y_pred_ = tf.compat.v1.to_int32(y_pred > t)
-            score, up_opt = tf.compat.v1.metrics.mean_iou(y_true, y_pred_, 2)
-            tf.compat.v1.keras.backend.get_session().run(tf.compat.v1.local_variables_initializer())
-            with tf.control_dependencies([up_opt]):
-                score = tf.identity(score)
-            prec.append(score)
-        return K.mean(K.stack(prec), axis=0)
 
     @staticmethod
     def cat_dice_loss(y_true, y_pred):
