@@ -105,6 +105,7 @@ def draw_history_plots(history, experiment_name, results_folder):
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
     plt.savefig(graph_folder+"/loss.png")
+    plt.close()
 
     layout = go.Layout(
         title=experiment_name+' model loss',
@@ -149,6 +150,7 @@ def draw_history_plots(history, experiment_name, results_folder):
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
     plt.savefig(graph_folder + "/cat_accuracy.png")
+    plt.close()
 
     layout = go.Layout(
         title=experiment_name+' model accuracy',
@@ -185,15 +187,16 @@ def draw_history_plots(history, experiment_name, results_folder):
     fig.write_html(graph_folder + "/cat_accuracy.html")
 
     # IoU plot
-    """plt.figure()
-    #plt.plot(history.history['mean_io_u'])
+    plt.figure()
+    plt.plot(history.history['mean_io_u'])
     plt.plot(history.history['val_mean_io_u'])
     plt.title(experiment_name+' model IoU')
     plt.ylabel('Mean IoU')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(graph_folder + "/meaniou.png")"""
-    """
+    plt.savefig(graph_folder + "/meaniou.png")
+    plt.close()
+
     layout = go.Layout(
         title=experiment_name+' model IoU',
         plot_bgcolor="#FFFFFF",
@@ -226,7 +229,7 @@ def draw_history_plots(history, experiment_name, results_folder):
         data.append(line_chart)
 
     fig = go.Figure(data=data, layout=layout)
-    fig.write_html(graph_folder + "/mean_io_u.html")"""
+    fig.write_html(graph_folder + "/mean_io_u.html")
 
     # Precision
     plt.figure()
@@ -237,6 +240,7 @@ def draw_history_plots(history, experiment_name, results_folder):
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
     plt.savefig(graph_folder + "/precision.png")
+    plt.close()
 
     layout = go.Layout(
         title=experiment_name + ' model precision',
@@ -280,6 +284,7 @@ def draw_history_plots(history, experiment_name, results_folder):
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
     plt.savefig(graph_folder + "/recall.png")
+    plt.close()
 
     layout = go.Layout(
         title=experiment_name + ' model recall',
@@ -323,6 +328,7 @@ def draw_history_plots(history, experiment_name, results_folder):
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
     plt.savefig(graph_folder + "/f1.png")
+    plt.close()
 
     layout = go.Layout(
         title=experiment_name + ' model dice coefficient',
