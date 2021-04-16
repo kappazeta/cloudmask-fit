@@ -396,7 +396,7 @@ class CMInit(ulog.Loggable):
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
-        val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
+        #val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
         #valid_generator.store_orig(dictionary['val'], self.prediction_path)
         length = dictionary['total']
         temp_list = dictionary['filepaths'][0:length//20]
@@ -418,6 +418,18 @@ class CMInit(ulog.Loggable):
         print(cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
+        plt.close()
+
+        sen2cor = valid_generator.get_sen2cor()
+        y_sen2cor = np.argmax(sen2cor, axis=3)
+        y_sen2cor_fl = y_sen2cor.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl, self.classes)
+        print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix_sen2cor", normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_sen2cor.png'))
         plt.close()
 
         """for i, matrix in enumerate(cm_multi_norm):

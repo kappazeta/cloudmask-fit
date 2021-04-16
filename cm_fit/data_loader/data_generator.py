@@ -342,6 +342,19 @@ class DataGenerator(Sequence):
                         print("Label for " + file + " not found")
         return y
 
+    def get_sen2cor(self):
+        y = np.empty((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=int)
+        # Initialization
+        for i, file in enumerate(self.list_indices):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        sen2cor = np.asarray(root["SCL"])
+                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                    except:
+                        print("Sen2Cor for " + file + " not found")
+        return y
+
 
 class TestDataGenerator(keras.utils.Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, shuffle=False):
