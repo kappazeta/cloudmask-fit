@@ -39,7 +39,7 @@ class NestedUnet(CMModel):
         self.input_shape = (width, height, num_channels)
         self.output_shape = (num_categories,)
         self.dropout_rate = 0.5
-        self.nb_filter = [32, 64, 128, 256, 512]
+        self.nb_filter = [64, 128, 256, 512, 1024]
 
         with tf.name_scope("Model"):
             img_input = tf.keras.layers.Input(shape=self.input_shape, name='main_input')
