@@ -60,10 +60,10 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     fig, ax = plt.subplots(figsize=(24, 24))
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
     # We want to show all ticks...
-    ax.set(xticks=np.arange(cm.shape[1]),
-           yticks=np.arange(cm.shape[0]),
+    ax.set(xticks=np.arange(cm.shape[1]-2),
+           yticks=np.arange(cm.shape[0]-2),
            # ... and label them with the respective list entries
-           xticklabels=class_list, yticklabels=class_list,
+           xticklabels=class_list[1:5], yticklabels=class_list[1:5],
             )
     plt.xlabel('Predicted label', fontsize=40)
     plt.ylabel('True label', fontsize=40)
@@ -81,11 +81,11 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     # Loop over data dimensions and create text annotations.
     fmt = '.2f' if normalized else 'd'
     thresh = cm.max() / 2.
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            ax.text(j, i, format(cm[i, j], fmt),
+    for i in range(cm.shape[0]-2):
+        for j in range(cm.shape[1]-2):
+            ax.text(j+1, i+1, format(cm[i+1, j+1], fmt),
                     ha="center", va="center",
-                    color="white" if cm[i, j] > thresh or cm[i, j] < 0.01 else "black", fontsize=36
+                    color="white" if cm[i+1, j+1] > thresh or cm[i+1, j+1] < 0.01 else "black", fontsize=36
                     )
     fig.tight_layout()
     return ax
