@@ -410,25 +410,30 @@ class CMInit(ulog.Loggable):
         classes = valid_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
 
+        f1_kmask = round(self.model.custom_f1(y_true, y_pred), 2)
+
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
+        plot_confusion_matrix(cm_normalize, self.classes, "Confusion matrix for KappaMask, dice score: " + str(f1_kmask),
+                              normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
 
         sen2cor = valid_generator.get_sen2cor()
         y_sen2cor = np.argmax(sen2cor, axis=3)
+        f1_sen2cor = round(self.model.custom_f1(y_true, y_sen2cor), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix_sen2cor", normalized=True)
+        plot_confusion_matrix(cm_normalize, self.classes, "Confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
+                              normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_sen2cor.png'))
         plt.close()
 

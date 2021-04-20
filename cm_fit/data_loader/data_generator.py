@@ -352,7 +352,7 @@ class DataGenerator(Sequence):
                         sen2cor = np.asarray(root["SCL"])
                         y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
                     except:
-                        print("Sen2Cor for " + file + " not found")
+                        print("Sen2Cor for confusion " + file + " not found")
         return y
 
 
