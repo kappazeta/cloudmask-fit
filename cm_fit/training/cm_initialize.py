@@ -409,6 +409,7 @@ class CMInit(ulog.Loggable):
         y_pred = np.argmax(predictions, axis=3)
         classes = valid_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
+        classes = tf.cast(classes, tf.float64)
 
         f1_kmask = round(self.model.custom_f1(classes, predictions), 2)
 
