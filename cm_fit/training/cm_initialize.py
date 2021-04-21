@@ -409,8 +409,8 @@ class CMInit(ulog.Loggable):
         y_pred = np.argmax(predictions, axis=3)
         classes = valid_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
-        predictions = tf.cast(predictions, tf.int32)
-        classes_f1 = tf.cast(classes, tf.int32)
+        predictions = tf.cast(predictions, tf.float32)
+        classes_f1 = tf.cast(classes, tf.float32)
 
         f1_kmask = round(self.model.custom_f1(classes_f1, predictions), 2)
 
@@ -427,8 +427,8 @@ class CMInit(ulog.Loggable):
 
         sen2cor = valid_generator.get_sen2cor()
         y_sen2cor = np.argmax(sen2cor, axis=3)
-        sen2cor = tf.cast(sen2cor, tf.int32)
-        classes_f1 = tf.cast(classes, tf.int32)
+        sen2cor = tf.cast(sen2cor, tf.float32)
+        classes_f1 = tf.cast(classes, tf.float32)
         f1_sen2cor = round(self.model.custom_f1(classes_f1, sen2cor), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
