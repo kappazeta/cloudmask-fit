@@ -57,11 +57,12 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
+    cm_smaller = cm[1:5]
     fig, ax = plt.subplots(figsize=(24, 24))
-    im = ax.imshow(cm[1:5], interpolation='nearest', cmap=cmap)
+    im = ax.imshow(cm_smaller, interpolation='nearest', cmap=cmap)
     # We want to show all ticks...
-    ax.set(xticks=np.arange(cm.shape[1]-2),
-           yticks=np.arange(cm.shape[0]-2),
+    ax.set(xticks=np.arange(cm_smaller.shape[1]),
+           yticks=np.arange(cm_smaller.shape[0]),
            # ... and label them with the respective list entries
            xticklabels=class_list[1:5], yticklabels=class_list[1:5],
             )
@@ -80,12 +81,12 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     # Loop over data dimensions and create text annotations.
     fmt = '.2f' if normalized else 'd'
-    thresh = cm[1:5].max() / 2.
-    for i in range(cm.shape[0]-2):
-        for j in range(cm.shape[1]-2):
-            ax.text(j+1, i+1, format(cm[i+1, j+1], fmt),
+    thresh = cm_smaller.max() / 2.
+    for i in range(cm_smaller.shape[0]):
+        for j in range(cm_smaller.shape[1]):
+            ax.text(j+1, i+1, format(cm_smaller[i, j], fmt),
                     ha="center", va="center",
-                    color="white" if cm[i+1, j+1] > thresh or cm[i+1, j+1] < 0.01 else "black", fontsize=36
+                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=36
                     )
     fig.tight_layout()
     return ax
