@@ -58,7 +58,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
     fig, ax = plt.subplots(figsize=(24, 24))
-    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    im = ax.imshow(cm[1:5], interpolation='nearest', cmap=cmap)
     # We want to show all ticks...
     ax.set(xticks=np.arange(cm.shape[1]-2),
            yticks=np.arange(cm.shape[0]-2),
@@ -80,7 +80,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     # Loop over data dimensions and create text annotations.
     fmt = '.2f' if normalized else 'd'
-    thresh = cm.max() / 2.
+    thresh = cm[1:5].max() / 2.
     for i in range(cm.shape[0]-2):
         for j in range(cm.shape[1]-2):
             ax.text(j+1, i+1, format(cm[i+1, j+1], fmt),
