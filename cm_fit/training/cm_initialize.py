@@ -8,6 +8,7 @@ import tensorflow as tf
 from PIL import Image
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -156,7 +157,7 @@ class CMInit(ulog.Loggable):
             # TODO:: Validate config structure
 
             self.config_from_dict(self.cfg)
-            copyfile(path, self.meta_data_path+"/config.json")
+            copyfile(path, self.meta_data_path + "/config.json")
 
     def get_tensor_shape_x(self):
         """
@@ -196,7 +197,8 @@ class CMInit(ulog.Loggable):
                     root.createDimension(key, val)
 
             if name not in root.variables.keys():
-                variable = root.createVariable(name, "f4", dimensions=dimension_names, zlib=True, complevel=9, endian="little")
+                variable = root.createVariable(name, "f4", dimensions=dimension_names, zlib=True, complevel=9,
+                                               endian="little")
             else:
                 variable = root[name]
             variable[:, :, :] = data
@@ -265,18 +267,28 @@ class CMInit(ulog.Loggable):
         for i, label in enumerate(self.classes):
             saving_filename = saving_path + "/" + filename_image + "/predict_" + label
             current_class = prediction[:, :, i]
-            #current_class[current_class >= 0.5] = 255
-            #current_class[current_class < 0.5] = 0
+            # current_class[current_class >= 0.5] = 255
+            # current_class[current_class < 0.5] = 0
             current_class *= 255
             current_class = current_class.astype(np.uint8)
-            skio.imsave(saving_filename+".png", current_class)
-        classification = classification*63 + 3
+            skio.imsave(saving_filename + ".png", current_class)
+        classification = classification * 63 + 3
         classification[classification > 255] = 20
         classification = classification.astype(np.uint8)
-        #skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
         im = Image.fromarray(classification)
         im.save(saving_path + "/" + filename_image + "/prediction.png")
         return True
+
+    def to_txt_normalization(self, train_std, train_means, train_min, train_max):
+        file = open(self.meta_data_path+"/normalization.txt", "w")
+        file.write("Std: "+str(train_std)+"\n"+"Mean: "+str(train_means)+"\n"+"Min: "+str(train_min)+"\n"+"Max: "+str(train_max))
+        file.close()
+
+    def to_txt_class_weights(self, weights):
+        file = open(self.meta_data_path+"/class_weights.txt", "w")
+        file.write(str(weights))
+        file.close()
 
     def get_model_memory_usage(self, batch_size, model):
         import numpy as np
@@ -314,7 +326,7 @@ class CMInit(ulog.Loggable):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
         return gbytes
 
-    def train(self, trainer_name='unet', pretrained_weights=False):
+    def train(self, test_products, trainer_name='unet', pretrained_weights=False):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
@@ -323,6 +335,8 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
+        self.params["test_products_list"] = test_products
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -335,7 +349,7 @@ class CMInit(ulog.Loggable):
         self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
 
-        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/"+trainer_name+"_")
+        checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/" + trainer_name + "_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
         self.model.set_batch_size(self.batch_size_train)
@@ -351,17 +365,19 @@ class CMInit(ulog.Loggable):
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
 
         if not self.png_iterator:
-            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'], 6)
-            val_std, val_means, val_min, val_max = set_normalization(validation_generator, self.splits['val'], 1)
+            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
+                                                                             6)
             print(train_std, train_means, train_min, train_max)
-            print(val_std, val_means, val_min, val_max)
+            self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
         # Fit the model, storing weights in checkpoints/.
         history = self.model.fit(training_generator,
                                  validation_generator)
         draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
+        numpy_loss_history = np.array(history)
+        np.savetxt(fname=self.meta_data_path+"/loss_history.txt", X=numpy_loss_history, delimiter=",")
 
-    def predict(self, path, path_weights):
+    def predict(self, path, path_weights, test_products):
         """
         Predict on a data cube, using model weights from a specific file.
         Prediction results are stored in output/prediction.png.
@@ -378,7 +394,7 @@ class CMInit(ulog.Loggable):
         self.model.compile(self.loss_name)
 
         # Load model weights.
-        self.model.load_weights(self.checkpoints_path+"/"+path_weights)
+        self.model.load_weights(self.checkpoints_path + "/" + path_weights)
 
         # Create an array for storing the segmentation mask.
         probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
@@ -388,20 +404,22 @@ class CMInit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
+        self.params["test_products_list"] = test_products
 
         # Read splits again
-        path_splits = os.path.abspath(self.meta_data_path+"/splits.json")
+        path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
-        #val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
-        #valid_generator.store_orig(dictionary['val'], self.prediction_path)
+        # val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
+        # valid_generator.store_orig(dictionary['val'], self.prediction_path)
         length = dictionary['total']
-        temp_list = dictionary['filepaths'][0:length//20]
-        #out = valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
-        #for i in range(20):
+        temp_list = dictionary['filepaths'][0:length // 20]
+        # out = valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
+        # for i in range(20):
         #    if i > 0:
         #        temp_list = dictionary['filepaths'][(i*length)//20:((i+1)*length) // 20]
         #        valid_generator.get_labels(temp_list, self.prediction_path, self.validation_path, self.classes)
@@ -420,7 +438,8 @@ class CMInit(ulog.Loggable):
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes, "Confusion matrix for KappaMask, dice score: " + str(f1_kmask),
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Confusion matrix for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
@@ -433,10 +452,12 @@ class CMInit(ulog.Loggable):
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl, self.classes)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
+                                                                                    self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes, "Confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
                               normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_sen2cor.png'))
         plt.close()
@@ -447,7 +468,7 @@ class CMInit(ulog.Loggable):
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_'+self.classes[i]+'.png'))
             plt.close()"""
 
-        #classes = self.model.predict_classes_gen(valid_generator)
+        # classes = self.model.predict_classes_gen(valid_generator)
 
         for i, prediction in enumerate(predictions):
             self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
@@ -456,7 +477,7 @@ class CMInit(ulog.Loggable):
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
 
-    def validation(self, datadir, path_weights):
+    def validation(self, datadir, path_weights, test_products):
         """
         Validate predicted data
         Create folder with substracted images
@@ -483,6 +504,7 @@ class CMInit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = True
 
         tile_paths = []
 
@@ -502,7 +524,7 @@ class CMInit(ulog.Loggable):
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
 
-    def test(self, product_name, path_weights):
+    def test(self, product_name, path_weights, test_products):
 
         self.get_model_by_name(self.model_arch)
 
@@ -524,6 +546,8 @@ class CMInit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
+        self.params["test_product_list"] = test_products
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -587,6 +611,7 @@ class CMInit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -598,7 +623,7 @@ class CMInit(ulog.Loggable):
             dictionary = json.load(fo)
 
         test_generator = DataGenerator(dictionary['val'], **self.params)
-        #test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 30)
+        # test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 30)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
         test_generator.store_orig(dictionary['val'], self.prediction_path)
 
@@ -613,26 +638,28 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
         training_generator = DataGenerator(dictionary['train'], **self.params)
-        validation_generator = DataGenerator(dictionary['val'], **self.params)
-        test_generator = DataGenerator(dictionary['test'], **self.params)
+        #validation_generator = DataGenerator(dictionary['val'], **self.params)
+        #test_generator = DataGenerator(dictionary['test'], **self.params)
         train_std, train_means, train_min, train_max = set_normalization(training_generator, dictionary['train'], 5)
-        val_std, val_means, val_min, val_max = set_normalization(validation_generator, dictionary['val'], 1)
+        self.to_txt_normalization(train_std, train_means, train_min, train_max)
         print("Stats")
         print(train_std, train_means, train_min, train_max)
         tr_overall_stat, tr_per_image_stat = training_generator.get_label_stat(dictionary['train'], self.classes)
-        val_overall_stat, val_per_image_stat = validation_generator.get_label_stat(dictionary['val'], self.classes)
-        test_overall_stat, test_per_image_stat = test_generator.get_label_stat(dictionary['test'], self.classes)
-        print(tr_overall_stat, val_overall_stat, test_overall_stat)
-        print(test_per_image_stat)
+        self.to_txt_class_weights(tr_overall_stat)
+        #val_overall_stat, val_per_image_stat = validation_generator.get_label_stat(dictionary['val'], self.classes)
+        #test_overall_stat, test_per_image_stat = test_generator.get_label_stat(dictionary['test'], self.classes)
+        #print(tr_overall_stat, val_overall_stat, test_overall_stat)
+        #print(test_per_image_stat)
         draw_4lines(tr_per_image_stat, "train", self.experiment_res_folder, self.classes)
-        draw_4lines(val_per_image_stat, "val", self.experiment_res_folder, self.classes)
-        draw_4lines(test_per_image_stat, "test", self.experiment_res_folder, self.classes)
+        #draw_4lines(val_per_image_stat, "val", self.experiment_res_folder, self.classes)
+        #draw_4lines(test_per_image_stat, "test", self.experiment_res_folder, self.classes)
         return
 
     def get_origin_im(self):
@@ -640,6 +667,7 @@ class CMInit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:

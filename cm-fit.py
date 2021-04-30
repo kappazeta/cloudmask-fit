@@ -67,6 +67,16 @@ def main():
             args.verbosity, "CloudMask Fit", "CMF",
             logfile=args.logfile_path
         )
+        # Read test products list and put it separately
+        test_products_file = open("data/test_products.txt", "r")
+        test_products = test_products_file.read().split("\n")
+        parsed_test_products = []
+        for item in test_products:
+            if item != "":
+                parse = item.split("_")
+                index_date = parse[5]+"_"+parse[2]
+                parsed_test_products.append(index_date)
+        print(parsed_test_products)
 
         if args.selecting:
             cmf = CMInit()
@@ -90,15 +100,15 @@ def main():
             """if args.statistic:
                 cmf.run_stats()"""
             if args.predict is not None:
-                cmf.predict(args.predict, args.weights)
+                cmf.predict(args.predict, args.weights, parsed_test_products)
             elif args.validate:
-                cmf.validation(args.validate, args.weights)
+                cmf.validation(args.validate, args.weights, parsed_test_products)
             elif args.train:
                 cmf.split()
                 if args.pretrain:
-                    cmf.train(args.train, args.pretrain)
+                    cmf.train(parsed_test_products, args.train, args.pretrain)
                 else:
-                    cmf.train(args.train)
+                    cmf.train(parsed_test_products, args.train)
             elif args.test:
                 cmf.test(args.test, args.weights)
             elif args.statistic:

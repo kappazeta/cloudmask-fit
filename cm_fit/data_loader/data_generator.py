@@ -10,7 +10,8 @@ from tensorflow.python.keras.utils.data_utils import Sequence
 
 
 class DataGenerator(Sequence):
-    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, normalization, shuffle=True, png_form=False):
+    def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, normalization,
+                 test_mode=False, shuffle=True, png_form=False, test_products_list=False):
         """ Initialization """
         self.path = path_input
         self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
@@ -30,6 +31,8 @@ class DataGenerator(Sequence):
         self.num_classes = num_classes
         self.shuffle = shuffle
         self.png_form = png_form
+        self.test_mode = test_mode
+        self.test_products_list = test_products_list
         self.on_epoch_end()
 
     def __len__(self):
@@ -45,9 +48,9 @@ class DataGenerator(Sequence):
         batch = [self.list_indices[k] for k in indexes]
 
         # Generate data
-        X, y = self.__data_generation(batch)
+        X, y, sample_weights = self.__data_generation(batch)
 
-        return X, y
+        return X, y, sample_weights
 
     def set_std(self, stds):
         self.stds = stds
@@ -300,9 +303,29 @@ class DataGenerator(Sequence):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
         X = np.empty((self.batch_size, self.dim[0], self.dim[1], len(self.features)))
         y = np.empty((self.batch_size, self.dim[0], self.dim[1], self.num_classes), dtype=int)
+        sample_weigths = np.zeros((self.batch_size, self.num_classes))
+        sample_weigths[:, 0] += 1
+        sample_weigths[:, 1] += 1
+        sample_weigths[:, 2] += 5.25
+        sample_weigths[:, 3] += 4.8
+        sample_weigths[:, 4] += 1.3
+        sample_weigths[:, 5] += 1
         # Initialization
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
+                filename = file.split("/")[-1]
+                filename_sub = filename.split("_")
+                filename_sub = filename_sub[0] + "_" + filename_sub[1]
+                if self.test_mode:
+                    if filename_sub not in self.test_products_list:
+                        print(filename_sub)
+                        print(self.test_products_list)
+                        continue
+                else:
+                    if filename_sub in self.test_products_list:
+                        print(filename_sub)
+                        print(self.test_products_list)
+                        continue
                 with nc.Dataset(file, 'r') as root:
                     if self.png_form:
                         data_bands = [(np.asarray(root[f]))*1/255 for i, f in
@@ -327,7 +350,7 @@ class DataGenerator(Sequence):
                     # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
                     X[i,] = data_bands
 
-        return X, y
+        return X, y, sample_weigths
 
     def get_classes(self):
         y = np.empty((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=int)

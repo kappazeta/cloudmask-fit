@@ -70,27 +70,27 @@ class CMModel(log.Loggable):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
         if loss_name == "dice_loss":
-            self.model.compile(optimizer=l_op, loss=self.dice_loss,
+            self.model.compile(optimizer=l_op, loss=self.dice_loss, sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         elif loss_name == "categorical_crossentropy":
-            self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         elif loss_name == "cat_dice_loss":
-            self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         elif loss_name == "weighted_loss":
-            self.model.compile(optimizer=l_op, loss=self.weighted_dice_loss,
+            self.model.compile(optimizer=l_op, loss=self.weighted_dice_loss, sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         else:
-            self.model.compile(optimizer=l_op, loss='categorical_crossentropy',
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
