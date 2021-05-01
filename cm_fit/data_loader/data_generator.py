@@ -48,9 +48,9 @@ class DataGenerator(Sequence):
         batch = [self.list_indices[k] for k in indexes]
 
         # Generate data
-        X, y, sample_weights = self.__data_generation(batch)
+        X, y = self.__data_generation(batch)
 
-        return X, y, sample_weights
+        return X, y#, sample_weights
 
     def set_std(self, stds):
         self.stds = stds
@@ -303,13 +303,13 @@ class DataGenerator(Sequence):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
         X = np.empty((self.batch_size, self.dim[0], self.dim[1], len(self.features)))
         y = np.empty((self.batch_size, self.dim[0], self.dim[1], self.num_classes), dtype=int)
-        sample_weigths = np.zeros((self.batch_size, self.num_classes))
-        sample_weigths[:, 0] += 1
-        sample_weigths[:, 1] += 1
-        sample_weigths[:, 2] += 5.25
-        sample_weigths[:, 3] += 4.8
-        sample_weigths[:, 4] += 1.3
-        sample_weigths[:, 5] += 1
+        #sample_weigths = np.zeros((self.batch_size, self.num_classes))
+        #sample_weigths[:, 0] += 1
+        #sample_weigths[:, 1] += 1
+        #sample_weigths[:, 2] += 5.25
+        #sample_weigths[:, 3] += 4.8
+        #sample_weigths[:, 4] += 1.3
+        #sample_weigths[:, 5] += 1
         # Initialization
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -350,7 +350,7 @@ class DataGenerator(Sequence):
                     # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
                     X[i,] = data_bands
 
-        return X, y, sample_weigths
+        return X, y#, sample_weigths
 
     def get_classes(self):
         y = np.empty((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=int)

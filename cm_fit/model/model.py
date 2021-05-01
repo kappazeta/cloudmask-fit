@@ -70,27 +70,27 @@ class CMModel(log.Loggable):
             l_op = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
         if loss_name == "dice_loss":
-            self.model.compile(optimizer=l_op, loss=self.dice_loss, sample_weight_mode="temporal",
+            self.model.compile(optimizer=l_op, loss=self.dice_loss, #sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         elif loss_name == "categorical_crossentropy":
-            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', sample_weight_mode="temporal",
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', #sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         elif loss_name == "cat_dice_loss":
-            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', sample_weight_mode="temporal",
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', #sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         elif loss_name == "weighted_loss":
-            self.model.compile(optimizer=l_op, loss=self.weighted_dice_loss, sample_weight_mode="temporal",
+            self.model.compile(optimizer=l_op, loss=self.weighted_dice_loss, #sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
         else:
-            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', sample_weight_mode="temporal",
+            self.model.compile(optimizer=l_op, loss='categorical_crossentropy', #sample_weight_mode="temporal",
                                metrics=[self.METRICS_SET["precision"], self.METRICS_SET["recall"],
                                         self.METRICS_SET["categorical_acc"], self.METRICS_SET['f1'],
                                         self.METRICS_SET['iou']])
@@ -190,7 +190,7 @@ class CMModel(log.Loggable):
             intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
             return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
         loss = dice_coef(y_true, y_pred)
-        weights = K.constant([1, 1, 5.7, 3.6, 1.3, 1])
+        weights = K.constant([1, 1, 5.2, 4.8, 1.3, 1])
         weighted_loss = loss * K.sum(y_true * weights, axis=-1)
         return weighted_loss
 
