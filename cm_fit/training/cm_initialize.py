@@ -291,6 +291,17 @@ class CMInit(ulog.Loggable):
         file.write(str(weights))
         file.close()
 
+    def set_batches_f1(self, true, predictions, batches):
+        samples = len(true) // batches
+        f1 = 0
+        iteration = 0
+        for i in range(batches):
+            curr_f1 = self.model.custom_f1(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
+            f1 += curr_f1
+            iteration += 1
+        average_f1 = f1 / iteration
+        return average_f1
+
     def get_model_memory_usage(self, batch_size, model):
         import numpy as np
         try:
@@ -486,7 +497,7 @@ class CMInit(ulog.Loggable):
         predictions = tf.cast(predictions, tf.float32)
         classes_f1 = tf.cast(classes, tf.float32)
 
-        f1_kmask = np.round(self.model.custom_f1(classes_f1, predictions), 2)
+        f1_kmask = np.round(self.set_batches_f1(classes_f1, predictions, 10), 2)
 
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
@@ -504,7 +515,7 @@ class CMInit(ulog.Loggable):
         y_sen2cor = np.argmax(sen2cor, axis=3)
         sen2cor = tf.cast(sen2cor, tf.float32)
         classes_f1 = tf.cast(classes, tf.float32)
-        f1_sen2cor = np.round(self.model.custom_f1(classes_f1, sen2cor), 2)
+        f1_sen2cor = np.round(self.set_batches_f1(classes_f1, sen2cor, 10), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
