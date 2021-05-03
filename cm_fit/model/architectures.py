@@ -177,7 +177,7 @@ class Unet(CMModel):
             pool3 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv3)
             n_filters *= growth_factor
 
-            if layers == 5 or layers == "False":
+            if layers == 5 or layers == False:
                 conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
                                                kernel_initializer='he_normal')(pool3)
                 conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
