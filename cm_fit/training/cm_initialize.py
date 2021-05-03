@@ -511,6 +511,9 @@ class CMInit(ulog.Loggable):
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
 
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
+
         sen2cor = valid_generator.get_sen2cor()
         y_sen2cor = np.argmax(sen2cor, axis=3)
         sen2cor = tf.cast(sen2cor, tf.float32)
@@ -536,9 +539,6 @@ class CMInit(ulog.Loggable):
             plt.close()"""
 
         # classes = self.model.predict_classes_gen(valid_generator)
-
-        for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
 
         """self.save_to_nc("output/model_v1/prediction.nc", "probabilities", probabilities)
         self.save_to_img("output/model_v1/prediction.png", class_mask)
