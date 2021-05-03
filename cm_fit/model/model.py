@@ -21,6 +21,8 @@ from cm_fit.util import log
 from cm_fit.model.unet_original import Unet
 from tensorflow.keras import backend as K
 from sklearn.metrics import confusion_matrix, multilabel_confusion_matrix
+from tensorflow.keras.callbacks import TensorBoard
+import time
 
 
 class CMModel(log.Loggable):
@@ -50,7 +52,8 @@ class CMModel(log.Loggable):
 
         self.path_checkpoint = ''
 
-    def construct(self, width, height, num_channels, num_categories, pretrained_weights=False):
+    def construct(self, width, height, num_channels, num_categories,
+                  layers=False, units=False, pretrained_weights=False):
         """
         Just an abstract placeholder function to be overloaded by subclasses.
         :param width: Width of a single sample (must be an odd number).
@@ -245,7 +248,7 @@ class CMModel(log.Loggable):
         cm_multi_norm = cm_multi.astype('float') / cm_multi.sum(axis=2)[:, :, np.newaxis]
         return cm, cm_normalized, cm_multi, cm_multi_norm
 
-    def fit(self, dataset_train, dataset_val):
+    def fit(self, dataset_train, dataset_val, model_name):
         """
         Train the model, producing model weights files as specified by the checkpoint path.
         :param dataset_train: Tensorflow Dataset to use for training.
@@ -268,6 +271,8 @@ class CMModel(log.Loggable):
                 monitor="val_custom_f1", factor=0.5, patience=30, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
+            tensorboard = TensorBoard(log_dir='logs/{}'.format(model_name))
+            callbacks.append(tensorboard)
 
         num_train_batches_per_epoch = self.num_train_samples // self.batch_size
         num_val_batches_per_epoch = self.num_val_samples // self.batch_size

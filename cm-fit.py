@@ -33,6 +33,8 @@ def main():
                    help="Pretrained weights.")
     p.add_argument("-predict", "--predict", action="store", dest="predict", default=None,
                    help="Path to predict on.")
+    p.add_argument("-tune", "--tune", action="store", dest="tune", default=None,
+                   help="Parameter tuning mode.")
     p.add_argument("-w", "--weights", action="store", dest="weights", default=None,
                    help="Path to the model weights to use for prediction.")
     p.add_argument("-c", "--config", action="store", dest="path_config", default="config/config_example.json",
@@ -109,6 +111,9 @@ def main():
                     cmf.train(parsed_test_products, args.train, args.pretrain)
                 else:
                     cmf.train(parsed_test_products, args.train)
+            elif args.tune:
+                cmf.split()
+                cmf.parameter_tune(parsed_test_products, args.tune)
             elif args.test:
                 cmf.test(args.test, args.weights)
             elif args.statistic:

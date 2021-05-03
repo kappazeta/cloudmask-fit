@@ -6,6 +6,7 @@ import netCDF4 as nc
 import skimage.io as skio
 import tensorflow as tf
 from PIL import Image
+import time
 
 import matplotlib
 
@@ -374,8 +375,63 @@ class CMInit(ulog.Loggable):
         history = self.model.fit(training_generator,
                                  validation_generator)
         draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
-        numpy_loss_history = np.array(history)
-        np.savetxt(fname=self.meta_data_path+"/loss_history.txt", X=numpy_loss_history, delimiter=",")
+
+    def parameter_tune(self, test_products, trainer_name='unet', pretrained_weights=False):
+        """
+        Tune hyperparameters with tensorboard.
+        """
+        # Put self.params to function
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_train
+        self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
+        self.params["test_mode"] = False
+        self.params["test_products_list"] = test_products
+
+        if self.png_iterator:
+            self.features = ["TCI_R", "TCI_G", "TCI_B"]
+            training_generator = DataGenerator(self.splits['train'], **self.params, png_form=True)
+            validation_generator = DataGenerator(self.splits['val'], **self.params, png_form=True)
+        else:
+            training_generator = DataGenerator(self.splits['train'], **self.params)
+            validation_generator = DataGenerator(self.splits['val'], **self.params)
+
+        if not self.png_iterator:
+            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
+                                                                             6)
+            print(train_std, train_means, train_min, train_max)
+            self.to_txt_normalization(train_std, train_means, train_min, train_max)
+
+        self.get_model_by_name(self.model_arch)
+        layer_numbers = [5, 6, 7]
+        units_per_layer = [32, 64, 128]
+        for layer in layer_numbers:
+            for units in units_per_layer:
+                model_name = "{}-layer_unet-{}-units-{}".format(layer, units, int(time.time()))
+                self.get_model_by_name(self.model_arch)
+                # Propagate configuration parameters.
+
+                checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/" + trainer_name + "_"+str(layer) + "_"
+                                                    + str(units) + "_")
+                self.model.set_checkpoint_prefix(checkpoint_prefix)
+                self.model.set_num_epochs(self.num_epochs)
+                self.model.set_batch_size(self.batch_size_train)
+                self.model.set_learning_rate(self.learning_rate)
+
+                # Construct and compile the model.
+                self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), layer, units,
+                                     pretrained_weights)
+                self.model.model.summary()
+                self.model.compile(self.loss_name)
+
+                size = self.get_model_memory_usage(self.batch_size_train, self.model.model)
+
+                self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
+
+                # Fit the model, storing weights in checkpoints/.
+                history = self.model.fit(training_generator,
+                                         validation_generator, model_name)
+                draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
     def predict(self, path, path_weights, test_products):
         """

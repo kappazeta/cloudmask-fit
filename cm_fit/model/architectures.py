@@ -142,7 +142,7 @@ class Unet(CMModel):
     def __init__(self):
         super(Unet, self).__init__("Unet")
 
-    def construct(self, width, height, num_channels, num_categories, pretrained_weights=False):
+    def construct(self, width, height, num_channels, num_categories, layers=False, units=False, pretrained_weights=False):
         """
         Construct the model.
         :param width: Width of a single sample (must be an odd number).
@@ -153,7 +153,10 @@ class Unet(CMModel):
         # For symmetrical neighbourhood, width and height must be odd numbers.
         self.input_shape = (width, height, num_channels)
         self.output_shape = (num_categories,)
-        n_filters = 64
+        if units:
+            n_filters = units
+        else:
+            n_filters = 64
         growth_factor = 2
 
         with tf.name_scope("Model"):
@@ -174,38 +177,124 @@ class Unet(CMModel):
             pool3 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv3)
             n_filters *= growth_factor
 
-            conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool3)
-            conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv4)
-            drop4 = tf.keras.layers.Dropout(0.5)(conv4)
-            pool4 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(drop4)
-            n_filters *= growth_factor
+            if layers == 5 or layers == "False":
+                conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(pool3)
+                conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv4)
+                drop4 = tf.keras.layers.Dropout(0.5)(conv4)
+                pool4 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(drop4)
+                n_filters *= growth_factor
 
-            #conv5 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
-            #                               kernel_initializer='he_normal')(pool4)
-            #conv5 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
-            #                               kernel_initializer='he_normal')(conv5)
-            #drop5 = tf.keras.layers.Dropout(0.5)(conv5)
-            #pool5 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(drop5)
-            #n_filters *= growth_factor
+                conv_middle = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                                     kernel_initializer='he_normal')(pool4)
+                conv_middle = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                                     kernel_initializer='he_normal')(conv_middle)
+                drop_middle = tf.keras.layers.Dropout(0.5)(conv_middle)
+                n_filters //= growth_factor
 
-            conv6 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool4)
-            conv6 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv6)
-            drop6 = tf.keras.layers.Dropout(0.5)(conv6)
-            n_filters //= growth_factor
+                up8 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same',
+                                             kernel_initializer='he_normal')(
+                    tf.keras.layers.UpSampling2D(size=(2, 2))(drop_middle))
+                merge8 = tf.keras.layers.concatenate([drop4, up8], axis=3)
+                conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(merge8)
+                conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv8)
+                n_filters //= growth_factor
+            elif layers == 6:
+                conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(pool3)
+                conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv4)
+                pool4 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv4)
+                n_filters *= growth_factor
 
-            #up7 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
-            #    tf.keras.layers.UpSampling2D(size=(2, 2))(drop6))
-            #merge7 = tf.keras.layers.concatenate([drop5, up7], axis=3)
-            #conv7 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge7)
-            #conv7 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv7)
-            #n_filters //= growth_factor
+                conv5 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(pool4)
+                conv5 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv5)
+                drop5 = tf.keras.layers.Dropout(0.5)(conv5)
+                pool5 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(drop5)
+                n_filters *= growth_factor
 
-            up8 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
-                tf.keras.layers.UpSampling2D(size=(2, 2))(drop6))
-            merge8 = tf.keras.layers.concatenate([conv4, up8], axis=3)
-            conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge8)
-            conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv8)
-            n_filters //= growth_factor
+                conv_middle = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                                     kernel_initializer='he_normal')(pool5)
+                conv_middle = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                                     kernel_initializer='he_normal')(conv_middle)
+                drop_middle = tf.keras.layers.Dropout(0.5)(conv_middle)
+                n_filters //= growth_factor
+
+                up7 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same',
+                                             kernel_initializer='he_normal')\
+                    (tf.keras.layers.UpSampling2D(size=(2, 2))(drop_middle))
+                merge7 = tf.keras.layers.concatenate([drop5, up7], axis=3)
+                conv7 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(merge7)
+                conv7 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv7)
+                n_filters //= growth_factor
+
+                up8 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same',
+                                             kernel_initializer='he_normal')(
+                    tf.keras.layers.UpSampling2D(size=(2, 2))(conv7))
+                merge8 = tf.keras.layers.concatenate([conv4, up8], axis=3)
+                conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(merge8)
+                conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv8)
+                n_filters //= growth_factor
+            elif layers == 7:
+                conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(pool3)
+                conv4 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv4)
+                pool4 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv4)
+                n_filters *= growth_factor
+
+                conv5 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(pool4)
+                conv5 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv5)
+                pool5 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv5)
+                n_filters *= growth_factor
+
+                conv6 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(pool5)
+                conv6 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv6)
+                drop6 = tf.keras.layers.Dropout(0.5)(conv6)
+                pool6 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(drop6)
+                n_filters *= growth_factor
+
+                conv_middle = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool6)
+                conv_middle = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv_middle)
+                drop_middle = tf.keras.layers.Dropout(0.5)(conv_middle)
+                n_filters //= growth_factor
+
+                up7 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+                    tf.keras.layers.UpSampling2D(size=(2, 2))(drop_middle))
+                merge7 = tf.keras.layers.concatenate([drop6, up7], axis=3)
+                conv7 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge7)
+                conv7 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv7)
+                n_filters //= growth_factor
+
+                up8_1 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+                    tf.keras.layers.UpSampling2D(size=(2, 2))(conv7))
+                merge8_1 = tf.keras.layers.concatenate([conv5, up8_1], axis=3)
+                conv8_1 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge8_1)
+                conv8_1 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv8_1)
+                n_filters //= growth_factor
+
+                up8 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same',
+                                             kernel_initializer='he_normal')(
+                    tf.keras.layers.UpSampling2D(size=(2, 2))(conv8_1))
+                merge8 = tf.keras.layers.concatenate([conv4, up8], axis=3)
+                conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(merge8)
+                conv8 = tf.keras.layers.Conv2D(n_filters, 3, activation='relu', padding='same',
+                                               kernel_initializer='he_normal')(conv8)
+                n_filters //= growth_factor
 
             up9 = tf.keras.layers.Conv2D(n_filters, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
                 tf.keras.layers.UpSampling2D(size=(2, 2))(conv8))
