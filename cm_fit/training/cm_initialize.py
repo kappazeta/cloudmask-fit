@@ -442,7 +442,7 @@ class CMInit(ulog.Loggable):
                 # Fit the model, storing weights in checkpoints/.
                 history = self.model.fit(training_generator,
                                          validation_generator, model_name)
-                draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
+                #draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
     def predict(self, path, path_weights, test_products):
         """
