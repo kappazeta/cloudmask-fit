@@ -571,14 +571,14 @@ class CMInit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = True
+        self.params["test_mode"] = False
 
         tile_paths = []
 
         for subfolder in os.listdir(datadir):
             tile_paths.append(os.path.join(datadir, subfolder))
         test_generator = DataGenerator(tile_paths, **self.params)
-        test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
+        #test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
         test_generator.store_orig(tile_paths, self.validation_path)
 
