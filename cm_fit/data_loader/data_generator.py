@@ -316,16 +316,17 @@ class DataGenerator(Sequence):
                 filename = file.split("/")[-1]
                 filename_sub = filename.split("_")
                 filename_sub = filename_sub[0] + "_" + filename_sub[1]
-                if self.test_mode:
-                    if filename_sub not in self.test_products_list:
-                        #print(filename_sub)
-                        #print(self.test_products_list)
-                        continue
-                else:
-                    if filename_sub in self.test_products_list:
-                        #print(filename_sub)
-                        #print(self.test_products_list)
-                        continue
+                if self.test_products_list:
+                    if self.test_mode:
+                        if filename_sub not in self.test_products_list:
+                            #print(filename_sub)
+                            #print(self.test_products_list)
+                            continue
+                    else:
+                        if filename_sub in self.test_products_list:
+                            #print(filename_sub)
+                            #print(self.test_products_list)
+                            continue
                 with nc.Dataset(file, 'r') as root:
                     if self.png_form:
                         data_bands = [(np.asarray(root[f]))*1/255 for i, f in
