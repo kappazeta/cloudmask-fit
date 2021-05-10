@@ -382,9 +382,11 @@ class CMInit(ulog.Loggable):
             print(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
+        model_name = "5-layer-64-units-{}".format(int(time.time()))
+
         # Fit the model, storing weights in checkpoints/.
         history = self.model.fit(training_generator,
-                                 validation_generator)
+                                 validation_generator, model_name)
         draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
     def parameter_tune(self, test_products, trainer_name='unet', pretrained_weights=False):
