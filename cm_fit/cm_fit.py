@@ -35,7 +35,7 @@ class CMFit(ulog.Loggable):
         self.cfg = {
             "version": 2,
             "input": {
-                "path_dir": "input/"
+                "data_dir": "input/"
             },
             "split": {
                 "ratio": {
@@ -83,7 +83,7 @@ class CMFit(ulog.Loggable):
         Load configuration from a dictionary.
         :param d: Dictionary with the configuration tree.
         """
-        self.path_input_dir = d["input"]["path_dir"]
+        self.path_input_dir = d["input"]["data_dir"]
         if not os.path.isabs(self.path_input_dir):
             self.path_input_dir = os.path.abspath(self.path_input_dir)
 
