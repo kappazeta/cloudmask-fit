@@ -3,6 +3,7 @@
   "experiment_name": "full_with_april",
   "input": {
     "data_dir": "data/merged_l2a_0204/",
+    "test_products": "data/test_products.txt",
     "label_set": "Label",
     "normalization": "minmax"
   },

@@ -69,35 +69,22 @@ def main():
             args.verbosity, "CloudMask Fit", "CMF",
             logfile=args.logfile_path
         )
+        cmf = CMInit()
+        cmf.load_config(args.path_config)
         # Read test products list and put it separately
-        test_products_file = open("data/test_products.txt", "r")
-        test_products = test_products_file.read().split("\n")
-        parsed_test_products = []
-        for item in test_products:
-            if item != "":
-                parse = item.split("_")
-                index_date = parse[5]+"_"+parse[2]
-                parsed_test_products.append(index_date)
+        parsed_test_products = cmf.load_test_products()
         print(parsed_test_products)
 
         if args.selecting:
-            cmf = CMInit()
-            cmf.load_config(args.path_config)
             cmf.split()
             cmf.selecting(args.selecting, args.weights)
         elif args.original_rgb:
-            cmf = CMInit()
-            cmf.load_config(args.path_config)
             cmf.split()
             cmf.get_origin_im()
         elif args.train_png:
-            cmf = CMInit(png_mode=True)
-            cmf.load_config(args.path_config)
             cmf.split()
             cmf.train(args.train)
         elif args.dev_mode:
-            cmf = CMInit()
-            cmf.load_config(args.path_config)
             print("Development mode")
             """if args.statistic:
                 cmf.run_stats()"""
