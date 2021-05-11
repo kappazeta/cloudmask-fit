@@ -27,9 +27,9 @@ from cm_fit.plot.train_history import plot_confusion_matrix, draw_4lines
 from sklearn.metrics import confusion_matrix
 
 
-class CMInit(ulog.Loggable):
+class CMFit(ulog.Loggable):
     def __init__(self, png_mode=False):
-        super(CMInit, self).__init__("CMF")
+        super(CMFit, self).__init__("CMF")
 
         self.cfg = {
             "version": 2,
