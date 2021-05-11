@@ -27,9 +27,9 @@ def main():
     # Parse command-line arguments.
     p = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
-    p.add_argument("-train", "--train", action="store", dest="train", default=False,
+    p.add_argument("-train", "--train", action="store_true", dest="train", default=False,
                    help="Train a new model.")
-    p.add_argument("-pretrain", "--pretrain", action="store", dest="pretrain", default=False,
+    p.add_argument("-pretrain", "--pretrain", action="store_true", dest="pretrain", default=False,
                    help="Pretrained weights.")
     p.add_argument("-predict", "--predict", action="store", dest="predict", default=None,
                    help="Path to predict on.")
@@ -43,7 +43,7 @@ def main():
                    help="Path for a log file, if desired.")
     p.add_argument("-v", "--verbosity", dest="verbosity", type=int, action="store", default=3,
                    help="Level of verbosity (1 - 3).")
-    p.add_argument("-d", "--dev_mode", dest="dev_mode", default=False,
+    p.add_argument("-d", "--dev_mode", action="store_true", dest="dev_mode", default=False,
                    help="Using other data_generator")
     p.add_argument("-val", "--validate", dest="validate", action="store", default=None,
                    help="Validation running")
