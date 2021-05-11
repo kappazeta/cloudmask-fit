@@ -162,6 +162,21 @@ class CMInit(ulog.Loggable):
             self.config_from_dict(self.cfg)
             copyfile(path, self.meta_data_path + "/config.json")
 
+    def load_test_products(self):
+        """
+        Load the list of test products from a text file.
+        :return: List of parsed test products.
+        """
+        test_products_file = open(self.cfg["input"]["test_products"], "r")
+        test_products = test_products_file.read().split("\n")
+        self.parsed_test_products = []
+        for item in test_products:
+            if item != "":
+                parse = item.split("_")
+                index_date = parse[5]+"_"+parse[2]
+                self.parsed_test_products.append(index_date)
+        return self.parsed_test_products
+
     def get_tensor_shape_x(self):
         """
         Get the shape of the X (input) tensor.
