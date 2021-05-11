@@ -98,7 +98,9 @@ class CMInit(ulog.Loggable):
         else:
             self.png_iterator = False
         physical_devices = tf.config.experimental.list_physical_devices('GPU')
-        tf.config.experimental.set_memory_growth(physical_devices[0], True)
+        self.log.info("Detected physical devices: {}".format(physical_devices))
+        if len(physical_devices) > 0:
+            tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     def config_from_dict(self, d):
         """
