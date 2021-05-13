@@ -271,7 +271,7 @@ class CMModel(log.Loggable):
                 monitor="val_custom_f1", factor=0.5, patience=30, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
-            tensorboard = TensorBoard(log_dir='logs/{}'.format(model_name), profile_batch='5,7')
+            tensorboard = TensorBoard(log_dir='logs/{}'.format(model_name), histogram_freq=1, profile_batch=2)
             callbacks.append(tensorboard)
 
         num_train_batches_per_epoch = self.num_train_samples // self.batch_size
