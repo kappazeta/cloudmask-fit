@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "experiment_name": "full_with_april",
+  "experiment_name": "june_32un",
   "input": {
-    "data_dir": "data/merged_l2a_0204/",
+    "data_dir": "data/merged_l2a_1904/",
     "test_products": "data/test_products.txt",
     "label_set": "Label",
     "normalization": "minmax"
@@ -21,7 +21,7 @@
   "train": {
     "learning_rate": 0.0001,
     "batch_size": 6,
-    "num_epochs": 300,
+    "num_epochs": 200,
     "loss": "dice_loss"
   },
   "predict": {
