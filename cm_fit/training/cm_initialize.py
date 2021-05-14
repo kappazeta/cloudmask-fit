@@ -399,7 +399,7 @@ class CMFit(ulog.Loggable):
             print(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
-        model_name = "5-layer-64-units-{}".format(int(time.time()))
+        model_name = "5-layer-32-units-{}".format(int(time.time()))
 
         # Fit the model, storing weights in checkpoints/.
         history = self.model.fit(training_generator,
