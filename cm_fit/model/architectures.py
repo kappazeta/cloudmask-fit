@@ -156,7 +156,7 @@ class Unet(CMModel):
         if units:
             n_filters = units
         else:
-            n_filters = 64
+            n_filters = 32
         growth_factor = 2
 
         with tf.name_scope("Model"):

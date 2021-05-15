@@ -27,9 +27,9 @@ from cm_fit.plot.train_history import plot_confusion_matrix, draw_4lines
 from sklearn.metrics import confusion_matrix
 
 
-class CMInit(ulog.Loggable):
+class CMFit(ulog.Loggable):
     def __init__(self, png_mode=False):
-        super(CMInit, self).__init__("CMF")
+        super(CMFit, self).__init__("CMF")
 
         self.cfg = {
             "version": 2,
@@ -399,7 +399,7 @@ class CMInit(ulog.Loggable):
             print(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
-        model_name = "5-layer-64-units-{}".format(int(time.time()))
+        model_name = "5-layer-32-units-{}".format(int(time.time()))
 
         # Fit the model, storing weights in checkpoints/.
         history = self.model.fit(training_generator,

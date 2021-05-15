@@ -19,22 +19,21 @@ import gc
 import argparse
 
 from cm_fit.util import log as ulog
-from cm_fit.cm_fit import CMFit
-from cm_fit.training.cm_initialize import CMInit
+from cm_fit.training.cm_initialize import CMFit
 
 
 def main():
     # Parse command-line arguments.
     p = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
-    p.add_argument("-train", "--train", action="store_true", dest="train", default=False,
-                   help="Train a new model.")
-    p.add_argument("-pretrain", "--pretrain", action="store_true", dest="pretrain", default=False,
-                   help="Pretrained weights.")
+    p.add_argument("-train", "--train", action="store", dest="train", default="unet",
+                   help="Training mode, argument pass a name for saved weights")
+    p.add_argument("-pretrain", "--pretrain", action="store", dest="pretrain", default="",
+                   help="Pretrained weights, expect absolute path for pretrained .hdf5 weight file")
     p.add_argument("-predict", "--predict", action="store", dest="predict", default=None,
-                   help="Path to predict on.")
+                   help="Prediction mode.")
     p.add_argument("-tune", "--tune", action="store", dest="tune", default=None,
-                   help="Parameter tuning mode.")
+                   help="Parameter tuning mode, argument pass a name for saved weights")
     p.add_argument("-w", "--weights", action="store", dest="weights", default=None,
                    help="Path to the model weights to use for prediction.")
     p.add_argument("-c", "--config", action="store", dest="path_config", default="config/config_example.json",
@@ -69,51 +68,50 @@ def main():
             args.verbosity, "CloudMask Fit", "CMF",
             logfile=args.logfile_path
         )
-        cmf = CMInit()
+        cmf = CMFit()
         cmf.load_config(args.path_config)
         # Read test products list and put it separately
         parsed_test_products = cmf.load_test_products()
         print(parsed_test_products)
 
         if args.selecting:
+            """ Mode for running sub-tiles prediction on all files that consist in folder """
             cmf.split()
             cmf.selecting(args.selecting, args.weights)
         elif args.original_rgb:
+            """ Mode for storing original images and comparison masks without running prediction """
             cmf.split()
             cmf.get_origin_im()
         elif args.train_png:
+            """ Mode for training model only on RGB bands (segments-ai) """
             cmf.split()
             cmf.train(args.train)
-        elif args.dev_mode:
-            print("Development mode")
-            """if args.statistic:
-                cmf.run_stats()"""
-            if args.predict is not None:
-                cmf.predict(args.predict, args.weights, parsed_test_products)
-            elif args.validate:
-                cmf.validation(args.validate, args.weights, parsed_test_products)
-            elif args.train:
-                cmf.split()
-                if args.pretrain:
-                    cmf.train(parsed_test_products, args.train, args.pretrain)
-                else:
-                    cmf.train(parsed_test_products, args.train)
-            elif args.tune:
-                cmf.split()
-                cmf.parameter_tune(parsed_test_products, args.tune)
-            elif args.test:
-                cmf.test(args.test, args.weights)
-            elif args.statistic:
-                cmf.run_stats()
-        else:
-            cmf = CMFit()
-            cmf.load_config(args.path_config)
-            if args.predict is not None:
-                cmf.predict(args.predict, args.weights)
-            elif args.train:
-                cmf.split()
-                cmf.train(args.train)
-
+        elif args.predict is not None:
+            """ Mode for prediction on validation set that is generated in split file,
+                files should have labels for confusion matrix and metrics calculation"""
+            cmf.predict(args.predict, args.weights, parsed_test_products)
+        elif args.validate:
+            """ Mode for prediction on all files in specific folder that should have labels, 
+                calculation metrics and confusion matrix """
+            cmf.validation(args.validate, args.weights, parsed_test_products)
+        elif args.train:
+            """ Mode for training model """
+            cmf.split()
+            if args.pretrain:
+                cmf.train(parsed_test_products, args.train, args.pretrain)
+            else:
+                cmf.train(parsed_test_products, args.train)
+        elif args.tune:
+            """ Parameter tuning mode """
+            cmf.split()
+            cmf.parameter_tune(parsed_test_products, args.tune)
+        elif args.test:
+            """ Evaluation on all test dataset that marked in parsed_test_products """
+            cmf.test(args.test, args.weights, parsed_test_products)
+        elif args.statistic:
+            """ Output per class statistic for labels """
+            cmf.run_stats()
+        
     except Exception as e:
         if log is not None:
             log.exception("Unhandled exception")

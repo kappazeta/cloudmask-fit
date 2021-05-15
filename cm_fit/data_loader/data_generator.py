@@ -6,6 +6,7 @@ import keras
 import skimage.io as skio
 from keras.utils import np_utils
 from PIL import Image
+import tensorflow as tf
 from tensorflow.python.keras.utils.data_utils import Sequence
 
 
@@ -350,6 +351,9 @@ class DataGenerator(Sequence):
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
                     X[i,] = data_bands
+
+        X = tf.cast(X, tf.float32)
+        y = tf.cast(y, tf.float32)
 
         return X, y#, sample_weigths
 
