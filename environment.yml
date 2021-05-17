@@ -12,5 +12,8 @@ dependencies:
   - matplotlib
   - pytest
   - tensorflow-gpu
+  - tensorboard
   - keras
   - plotly
+  - pip:
+      - tensorboard-plugin-profile
