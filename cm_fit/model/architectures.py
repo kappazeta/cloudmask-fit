@@ -19,6 +19,7 @@ import tensorflow as tf
 
 from cm_fit.model.model import CMModel
 from cm_fit.model.nested_unet import NestedUnet
+import cm_fit.model.unet_original as unet_original
 
 
 class CMMA1(CMModel):
@@ -26,6 +27,7 @@ class CMMA1(CMModel):
     A pixel-based architecture based on U-Net, for single pixel samples with symmetrical neighbourhood.
     Better for larger neighbourhoods.
     """
+    PIXEL_BASED = True
 
     def __init__(self):
         super(CMMA1, self).__init__("CMM.A1")
@@ -62,7 +64,7 @@ class CMMA1(CMModel):
 
         return l
 
-    def construct(self, width, height, num_channels, num_categories):
+    def construct(self, width, height, num_channels, num_categories, layers=False, units=False, pretrained_weights=False):
         """
         Construct the model.
         :param width: Width of a single sample (must be an odd number).
@@ -96,17 +98,20 @@ class CMMA1(CMModel):
 
             self.model = tf.keras.Model(inputs=[l_in], outputs=[l_out])
 
+            if pretrained_weights:
+                self.model.load_weights(pretrained_weights)
+
 
 class CMMA2(CMModel):
     """
     A simple pixel-based architecture for single pixel samples with symmetrical neighbourhood.
-    Better for smaller neighbourhoods.
     """
+    PIXEL_BASED = True
 
     def __init__(self):
         super(CMMA2, self).__init__("CMM.A2")
 
-    def construct(self, width, height, num_channels, num_categories):
+    def construct(self, width, height, num_channels, num_categories, layers=False, units=False, pretrained_weights=False):
         """
         Construct the model.
         :param width: Width of a single sample (must be an odd number).
@@ -133,11 +138,15 @@ class CMMA2(CMModel):
 
             self.model = tf.keras.Model(inputs=[l_in], outputs=[l_out])
 
+            if pretrained_weights:
+                self.model.load_weights(pretrained_weights)
+
 
 class Unet(CMModel):
     """
     Unet
     """
+    PIXEL_BASED = False
 
     def __init__(self):
         super(Unet, self).__init__("Unet")
@@ -333,9 +342,26 @@ class Unet(CMModel):
             return self.model
 
 
+class OriginalUnet(CMModel):
+    """
+    Unet
+    """
+    PIXEL_BASED = False
+
+    def __init__(self):
+        super(OriginalUnet, self).__init__("Unet")
+
+        self.input_shape = (512, 512, 10)
+        self.output_shape = (10,)
+        self.model = unet_original.Unet(input_size=(512, 512, 13))
+
+        self.class_weights = [1,1,5.7,3.6,1.3,1]
+
+
 ARCH_MAP = {
     "a1": CMMA1,
     "a2": CMMA2,
+    "OriginalUnet": OriginalUnet,
     "Unet": Unet,
     "NestedUnet": NestedUnet
 }

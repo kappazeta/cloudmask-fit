@@ -1,3 +1,19 @@
+# vim: set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab
+
+# Copyright 2020-2021 KappaZeta Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import json
 import pickle
@@ -16,8 +32,8 @@ import matplotlib.pyplot as plt
 from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
 from cm_fit.model.architectures import ARCH_MAP
-from cm_fit.data_loader.data_generator import DataGenerator
-from cm_fit.data_loader.utils import generate_splits
+from cm_fit.data_generator.dg_base import DataGenerator
+from cm_fit.data_generator.utils import generate_splits
 from cm_fit.training.utils import set_normalization
 from cm_fit.plot.train_history import draw_history_plots
 from tensorflow.keras.utils import Sequence
@@ -31,35 +47,11 @@ class CMFit(ulog.Loggable):
     def __init__(self, png_mode=False):
         super(CMFit, self).__init__("CMF")
 
-        self.cfg = {
-            "version": 2,
-            "input": {
-                "path_dir": "input/"
-            },
-            "split": {
-                "ratio": {
-                    "test": 0.1,
-                    "val": 0.2
-                }
-            },
-            "model": {
-                "architecture": "a1",
-                "features": ["AOT", "B01", "B02", "B03", "B04", "B05", "B06", "B08", "B8A", "B09", "B11", "B12", "WVP"],
-                "pixel_window_size": 9,
-            },
-            "train": {
-                "learning_rate": 1E-4,
-                "batch_size": 6,
-                "num_epochs": 10
-            },
-            "predict": {
-                "batch_size": 1
-            }
-        }
-
         self.classes = [
             "UNDEFINED", "CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"
         ]
+
+        self.model_name_prefix = "5-layer-32-units"
 
         self.split_ratio_test = 0.1
         self.split_ratio_val = 0.2
@@ -92,15 +84,33 @@ class CMFit(ulog.Loggable):
 
         self.model = None
         self.loss_name = "dice_loss"
+
         self.splits = {}
+        self.num_train_subtiles = 0
+        self.num_val_subtiles = 0
+
         if png_mode:
             self.png_iterator = True
         else:
             self.png_iterator = False
+
         physical_devices = tf.config.experimental.list_physical_devices('GPU')
         self.log.info("Detected physical devices: {}".format(physical_devices))
         if len(physical_devices) > 0:
             tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
+    def create_data_generator(self, splits, params, png_form=False):
+        return DataGenerator(splits, **params, png_form=png_form)
+
+    def set_config(self, config):
+        """
+        Configure the fitting class instance.
+        """
+        self.cfg = config.get_dict()
+
+        self.config_from_dict(self.cfg)
+        self.create_folders()
+        copyfile(config.path, self.meta_data_path + "/config.json")
 
     def config_from_dict(self, d):
         """
@@ -132,7 +142,6 @@ class CMFit(ulog.Loggable):
         self.label_set = d["input"]["label_set"]
         self.normalization = d["input"]["normalization"]
         self.loss_name = d["train"]["loss"]
-        self.create_folders()
 
     def create_folders(self):
         if not os.path.exists('results'):
@@ -149,18 +158,6 @@ class CMFit(ulog.Loggable):
             os.mkdir(self.checkpoints_path)
         if not os.path.exists(self.plots_path):
             os.mkdir(self.plots_path)
-
-    def load_config(self, path):
-        """
-        Load configuration from a JSON file.
-        :param path: Path to the JSON file.
-        """
-        with open(path, "rt") as fi:
-            self.cfg = json.load(fi)
-            # TODO:: Validate config structure
-
-            self.config_from_dict(self.cfg)
-            copyfile(path, self.meta_data_path + "/config.json")
 
     def load_test_products(self):
         """
@@ -244,6 +241,8 @@ class CMFit(ulog.Loggable):
         The results are written to output/splits.json.
         """
         self.splits = generate_splits(self.path_data_dir, self.split_ratio_val, self.split_ratio_test)
+        self.num_train_subtiles = len(self.splits['train'])
+        self.num_val_subtiles = len(self.splits['val'])
 
         self.log.info(
             (
@@ -254,11 +253,11 @@ class CMFit(ulog.Loggable):
                 " Test: {test} ({test_p:.2f}%)"
             ).format(
                 total=self.splits['total'],
-                train=len(self.splits['train']),
-                val=len(self.splits['val']),
+                train=self.num_train_subtiles,
+                val=self.num_val_subtiles,
                 test=len(self.splits['test']),
-                train_p=100 * len(self.splits['train']) / self.splits['total'],
-                val_p=100 * len(self.splits['val']) / self.splits['total'],
+                train_p=100 * self.num_train_subtiles / self.splits['total'],
+                val_p=100 * self.num_val_subtiles / self.splits['total'],
                 test_p=100 * len(self.splits['test']) / self.splits['total']
             )
         )
@@ -355,7 +354,7 @@ class CMFit(ulog.Loggable):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
         return gbytes
 
-    def train(self, test_products, trainer_name='unet', pretrained_weights=False):
+    def train(self, test_products, trainer_name='unet', pretrained_weights=False, renormalize=True):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
@@ -369,15 +368,15 @@ class CMFit(ulog.Loggable):
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
-            training_generator = DataGenerator(self.splits['train'], **self.params, png_form=True)
-            validation_generator = DataGenerator(self.splits['val'], **self.params, png_form=True)
+            training_generator = self.create_data_generator(self.splits['train'], self.params, png_form=True)
+            validation_generator = self.create_data_generator(self.splits['val'], self.params, png_form=True)
         else:
-            training_generator = DataGenerator(self.splits['train'], **self.params)
-            validation_generator = DataGenerator(self.splits['val'], **self.params)
+            training_generator = self.create_data_generator(self.splits['train'], self.params)
+            validation_generator = self.create_data_generator(self.splits['val'], self.params)
 
         self.get_model_by_name(self.model_arch)
-        # Propagate configuration parameters.
 
+        # Propagate configuration parameters.
         checkpoint_prefix = os.path.abspath(self.checkpoints_path + "/" + trainer_name + "_")
         self.model.set_checkpoint_prefix(checkpoint_prefix)
         self.model.set_num_epochs(self.num_epochs)
@@ -386,27 +385,29 @@ class CMFit(ulog.Loggable):
 
         # Construct and compile the model.
         self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), pretrained_weights)
-        self.model.model.summary()
         self.model.compile(self.loss_name)
 
         size = self.get_model_memory_usage(self.batch_size_train, self.model.model)
 
-        self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
+        self.log.info("Model memory usage: {} GiB".format(size))
 
-        if not self.png_iterator:
-            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
-                                                                             6)
+        self.model.set_num_samples(self.num_train_subtiles, self.num_val_subtiles)
+
+        if renormalize and not self.png_iterator:
+            train_std, train_means, train_min, train_max = set_normalization(
+                training_generator, self.splits['train'], 6
+            )
             print(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
+        # If not renormalize, then load the file, and assign values in DataGenerator
 
-        model_name = "5-layer-32-units-{}".format(int(time.time()))
+        model_name = "{}-{}".format(self.model_name_prefix, int(time.time()))
 
-        # Fit the model, storing weights in checkpoints/.
-        history = self.model.fit(training_generator,
-                                 validation_generator, model_name)
+        # Fit the model, storing weights in checkpoints.
+        history = self.model.fit(training_generator, validation_generator, model_name)
         draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
-    def parameter_tune(self, test_products, trainer_name='unet', pretrained_weights=False):
+    def parameter_tune(self, test_products, trainer_name='unet', pretrained_weights=False, renormalize=True):
         """
         Tune hyperparameters with tensorboard.
         """
@@ -420,15 +421,16 @@ class CMFit(ulog.Loggable):
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
-            training_generator = DataGenerator(self.splits['train'], **self.params, png_form=True)
-            validation_generator = DataGenerator(self.splits['val'], **self.params, png_form=True)
+            training_generator = self.create_data_generator(self.splits['train'], self.params, png_form=True)
+            validation_generator = self.create_data_generator(self.splits['val'], self.params, png_form=True)
         else:
-            training_generator = DataGenerator(self.splits['train'], **self.params)
-            validation_generator = DataGenerator(self.splits['val'], **self.params)
+            training_generator = self.create_data_generator(self.splits['train'], self.params)
+            validation_generator = self.create_data_generator(self.splits['val'], self.params)
 
-        if not self.png_iterator:
-            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
-                                                                             6)
+        if renormalize and not self.png_iterator:
+            train_std, train_means, train_min, train_max = set_normalization(
+                training_generator, self.splits['train'], 6
+            )
             print(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
@@ -456,7 +458,7 @@ class CMFit(ulog.Loggable):
 
                 size = self.get_model_memory_usage(self.batch_size_train, self.model.model)
 
-                self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
+                self.model.set_num_samples(self.num_train_subtiles, self.num_val_subtiles)
 
                 # Fit the model, storing weights in checkpoints/.
                 history = self.model.fit(training_generator,
@@ -498,7 +500,7 @@ class CMFit(ulog.Loggable):
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
-        valid_generator = DataGenerator(dictionary['val'], **self.params)
+        valid_generator = self.create_data_generator(dictionary['val'], self.params)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
         # val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
@@ -596,7 +598,7 @@ class CMFit(ulog.Loggable):
 
         for subfolder in os.listdir(datadir):
             tile_paths.append(os.path.join(datadir, subfolder))
-        test_generator = DataGenerator(tile_paths, **self.params)
+        test_generator = self.create_data_generator(tile_paths, self.params)
         #test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
         test_generator.store_orig(tile_paths, self.validation_path)
@@ -644,7 +646,7 @@ class CMFit(ulog.Loggable):
         for subfolder in os.listdir(self.path_data_dir):
             if subfolder.startswith(index_match + "_" + date_match):
                 tile_paths.append(os.path.join(self.path_data_dir, subfolder))
-        test_generator = DataGenerator(tile_paths, **self.params)
+        test_generator = self.create_data_generator(tile_paths, self.params)
         test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
         test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
 
@@ -708,7 +710,7 @@ class CMFit(ulog.Loggable):
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
-        test_generator = DataGenerator(dictionary['val'], **self.params)
+        test_generator = self.create_data_generator(dictionary['val'], self.params)
         # test_std, test_means, test_min, test_max = set_normalization(test_generator, dictionary['val'], 30)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
         test_generator.store_orig(dictionary['val'], self.prediction_path)
@@ -730,9 +732,9 @@ class CMFit(ulog.Loggable):
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
-        training_generator = DataGenerator(dictionary['train'], **self.params)
-        #validation_generator = DataGenerator(dictionary['val'], **self.params)
-        #test_generator = DataGenerator(dictionary['test'], **self.params)
+        training_generator = self.create_data_generator(dictionary['train'], self.params)
+        #validation_generator = self.create_data_generator(dictionary['val'], self.params)
+        #test_generator = self.create_data_generator(dictionary['test'], self.params)
         train_std, train_means, train_min, train_max = set_normalization(training_generator, dictionary['train'], 5)
         self.to_txt_normalization(train_std, train_means, train_min, train_max)
         print("Stats")
@@ -759,9 +761,9 @@ class CMFit(ulog.Loggable):
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
-        train_generator = DataGenerator(dictionary['train'], **self.params)
+        train_generator = self.create_data_generator(dictionary['train'], self.params)
         train_generator.store_orig(dictionary['train'], self.prediction_path)
-        validation_generator = DataGenerator(dictionary['val'], **self.params)
+        validation_generator = self.create_data_generator(dictionary['val'], self.params)
         validation_generator.store_orig(dictionary['val'], self.prediction_path)
 
         return

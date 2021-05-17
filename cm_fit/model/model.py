@@ -33,16 +33,15 @@ class CMModel(log.Loggable):
     def __init__(self, log_abbrev='CMM'):
         super(CMModel, self).__init__(log_abbrev)
 
-        self.input_shape = (512, 512, 10)
-        self.output_shape = (10,)
-        self.model = Unet(input_size=(512, 512, 13))
+        self.input_shape = None
+        self.output_shape = None
+        self.model = None
 
         self.learning_rate = 0.001
         self.num_train_samples = 0
         self.num_val_samples = 0
         self.batch_size = 0
         self.num_epochs = 3
-        self.class_weights = [1,1,5.7,3.6,1.3,1]
 
         # Accuracy, precision, recall, f1, iou
         self.METRICS_SET = {"accuracy": tf.keras.metrics.Accuracy(), "categorical_acc": tf.keras.metrics.CategoricalAccuracy(),
@@ -277,10 +276,8 @@ class CMModel(log.Loggable):
         num_train_batches_per_epoch = self.num_train_samples // self.batch_size
         num_val_batches_per_epoch = self.num_val_samples // self.batch_size
 
-        # TODO:: Duplicate a random number of samples, to fill batches.
-
         with tf.name_scope('Training'):
-            history = self.model.fit_generator(
+            history = self.model.fit(
                 dataset_train, validation_data=dataset_val, callbacks=callbacks, epochs=self.num_epochs,
                 steps_per_epoch=num_train_batches_per_epoch, validation_steps=num_val_batches_per_epoch
             )

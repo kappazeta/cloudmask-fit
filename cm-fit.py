@@ -19,7 +19,9 @@ import gc
 import argparse
 
 from cm_fit.util import log as ulog
-from cm_fit.training.cm_initialize import CMFit
+from cm_fit.util.confguration import CMConfig
+from cm_fit.training.fit_base import CMFit
+from cm_fit.training.fit_pixel_nhood import CMFitPixelNHood
 
 
 def main():
@@ -58,6 +60,8 @@ def main():
                    help="training for 3 features")
     p.add_argument("-orig", "--original_rgb", dest="original_rgb", action="store", default=None,
                    help="save original rgb")
+    p.add_argument("--renormalize", dest="renormalize", action="store_true", default=False,
+                   help="Recalculate statistics from the input data. To be performed each time the training dataset changes.")
 
     args = p.parse_args()
 
@@ -68,8 +72,17 @@ def main():
             args.verbosity, "CloudMask Fit", "CMF",
             logfile=args.logfile_path
         )
-        cmf = CMFit()
-        cmf.load_config(args.path_config)
+
+        # Load configuration file.
+        cfg = CMConfig()
+        cfg.load(args.path_config)
+        # TODO:: Let model architecture class decide, which fitting class and data generator to use.
+        # Create an instance of the fitting class.
+        cls_fit = CMFit
+        if cfg.is_model_arch_pixel_based():
+            cls_fit = CMFitPixelNHood
+        cmf = cls_fit()
+        cmf.set_config(cfg)
         # Read test products list and put it separately
         parsed_test_products = cmf.load_test_products()
         print(parsed_test_products)
@@ -98,9 +111,9 @@ def main():
             """ Mode for training model """
             cmf.split()
             if args.pretrain:
-                cmf.train(parsed_test_products, args.train, args.pretrain)
+                cmf.train(parsed_test_products, args.train, args.pretrain, renormalize=args.renormalize)
             else:
-                cmf.train(parsed_test_products, args.train)
+                cmf.train(parsed_test_products, args.train, renormalize=args.renormalize)
         elif args.tune:
             """ Parameter tuning mode """
             cmf.split()
