@@ -12,7 +12,7 @@ from tensorflow.python.keras.utils.data_utils import Sequence
 
 class DataGenerator(Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, normalization,
-                 test_mode=False, shuffle=True, png_form=False):
+                 shuffle=True, png_form=False):
         """ Initialization """
         self.path = path_input
         self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
@@ -32,7 +32,6 @@ class DataGenerator(Sequence):
         self.num_classes = num_classes
         self.shuffle = shuffle
         self.png_form = png_form
-        self.test_mode = test_mode
         self.on_epoch_end()
 
     def __len__(self):

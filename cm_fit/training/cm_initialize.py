@@ -488,7 +488,6 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         # Read splits again
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
@@ -583,7 +582,6 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         tile_paths = []
 
@@ -625,7 +623,6 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -689,7 +686,6 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -716,7 +712,6 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
@@ -745,7 +740,6 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
