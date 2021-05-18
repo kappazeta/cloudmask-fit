@@ -76,34 +76,34 @@ def main():
 
         if args.selecting:
             """ Mode for running sub-tiles prediction on all files that consist in folder """
-            cmf.split()
+            cmf.split(parsed_test_products)
             cmf.selecting(args.selecting, args.weights)
         elif args.original_rgb:
             """ Mode for storing original images and comparison masks without running prediction """
-            cmf.split()
+            cmf.split(parsed_test_products)
             cmf.get_origin_im()
         elif args.train_png:
             """ Mode for training model only on RGB bands (segments-ai) """
-            cmf.split()
+            cmf.split(parsed_test_products)
             cmf.train(args.train)
         elif args.predict is not None:
             """ Mode for prediction on validation set that is generated in split file,
                 files should have labels for confusion matrix and metrics calculation"""
-            cmf.predict(args.predict, args.weights, parsed_test_products)
+            cmf.predict(args.predict, args.weights)
         elif args.validate:
             """ Mode for prediction on all files in specific folder that should have labels, 
                 calculation metrics and confusion matrix """
-            cmf.validation(args.validate, args.weights, parsed_test_products)
+            cmf.validation(args.validate, args.weights)
         elif args.train:
             """ Mode for training model """
-            cmf.split()
+            cmf.split(parsed_test_products)
             if args.pretrain:
-                cmf.train(parsed_test_products, args.train, args.pretrain)
+                cmf.train(args.train, args.pretrain)
             else:
-                cmf.train(parsed_test_products, args.train)
+                cmf.train(args.train)
         elif args.tune:
             """ Parameter tuning mode """
-            cmf.split()
+            cmf.split(parsed_test_products)
             cmf.parameter_tune(parsed_test_products, args.tune)
         elif args.test:
             """ Evaluation on all test dataset that marked in parsed_test_products """
@@ -111,7 +111,7 @@ def main():
         elif args.statistic:
             """ Output per class statistic for labels """
             cmf.run_stats()
-        
+
     except Exception as e:
         if log is not None:
             log.exception("Unhandled exception")

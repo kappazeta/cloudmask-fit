@@ -12,7 +12,7 @@ from tensorflow.python.keras.utils.data_utils import Sequence
 
 class DataGenerator(Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, num_classes, label_set, normalization,
-                 test_mode=False, shuffle=True, png_form=False, test_products_list=False):
+                 test_mode=False, shuffle=True, png_form=False):
         """ Initialization """
         self.path = path_input
         self.stds = [0.00085, 0.04, 0.037, 0.035, 0.034, 0.035, 0.033, 0.035, 0.034, 0.054, 0.025, 0.021, 0.0083]
@@ -33,7 +33,6 @@ class DataGenerator(Sequence):
         self.shuffle = shuffle
         self.png_form = png_form
         self.test_mode = test_mode
-        self.test_products_list = test_products_list
         self.on_epoch_end()
 
     def __len__(self):
@@ -103,23 +102,13 @@ class DataGenerator(Sequence):
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
-                    y = np.empty((self.dim[0], self.dim[1], self.num_classes), dtype=int)
                     data_bands = [np.asarray(root[f])
                                   for i, f in enumerate(["TCI_R", "TCI_G", "TCI_B"])]
 
-                    # data_bands = [(np.asarray(root[f]) - self.min_v[i + 1]) / (self.max_v[i + 1]-self.min_v[i + 1])
-                    #              for i, f in enumerate(["B02", "B03", "B04"])]
                     data_bands = np.stack(data_bands)
-                    # data_bands /= np.max(np.abs(data_bands), axis=0)
-                    # data_bands = (data_bands-np.min(data_bands))/\
-                    #             (np.max(data_bands)-np.min(data_bands))
-                    # data_bands *= 255.0
-                    # data_bands *= (255.0/(np.max(np.abs(data_bands))))
                     data_bands = np.rollaxis(data_bands, 0, 3)
 
-                    # img = Image.fromarray(data_bands, 'RGB')
                     file_name = file.split(".")[0].split("/")[-1]
-                    # img.save(path_prediction+"/"+file_name+"orig.png")
 
                     if not os.path.exists(path_prediction + "/" + file_name):
                         os.mkdir(path_prediction + "/" + file_name)
@@ -201,7 +190,7 @@ class DataGenerator(Sequence):
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
-                    y = np.empty((self.dim[0], self.dim[1], self.num_classes), dtype=int)
+                    y = np.zeros((self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
                     data_bands = [np.asarray(root[f])
                                   for i, f in enumerate(["TCI_R", "TCI_G", "TCI_B"])]
 
@@ -268,7 +257,7 @@ class DataGenerator(Sequence):
 
     def get_normal_par(self, list_indices_temp):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
-        X = np.empty((len(list_indices_temp), self.dim[0], self.dim[1], len(self.features)))
+        X = np.zeros((len(list_indices_temp), self.dim[0], self.dim[1], len(self.features)), dtype=np.float32)
         # Initialization
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -302,32 +291,14 @@ class DataGenerator(Sequence):
 
     def __data_generation(self, list_indices_temp):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
-        X = np.empty((self.batch_size, self.dim[0], self.dim[1], len(self.features)))
-        y = np.empty((self.batch_size, self.dim[0], self.dim[1], self.num_classes), dtype=int)
-        #sample_weigths = np.zeros((self.batch_size, self.num_classes))
-        #sample_weigths[:, 0] += 1
-        #sample_weigths[:, 1] += 1
-        #sample_weigths[:, 2] += 5.25
-        #sample_weigths[:, 3] += 4.8
-        #sample_weigths[:, 4] += 1.3
-        #sample_weigths[:, 5] += 1
+        X = np.zeros((self.batch_size, self.dim[0], self.dim[1], len(self.features)), dtype=np.float32)
+        y = np.zeros((self.batch_size, self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
                 filename = file.split("/")[-1]
                 filename_sub = filename.split("_")
                 filename_sub = filename_sub[0] + "_" + filename_sub[1]
-                if self.test_products_list:
-                    if self.test_mode:
-                        if filename_sub not in self.test_products_list:
-                            #print(filename_sub)
-                            #print(self.test_products_list)
-                            continue
-                    else:
-                        if filename_sub in self.test_products_list:
-                            #print(filename_sub)
-                            #print(self.test_products_list)
-                            continue
                 with nc.Dataset(file, 'r') as root:
                     if self.png_form:
                         data_bands = [(np.asarray(root[f]))*1/255 for i, f in
@@ -358,7 +329,7 @@ class DataGenerator(Sequence):
         return X, y#, sample_weigths
 
     def get_classes(self):
-        y = np.empty((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=int)
+        y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -371,7 +342,7 @@ class DataGenerator(Sequence):
         return y
 
     def get_sen2cor(self):
-        y = np.empty((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=int)
+        y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -421,8 +392,8 @@ class TestDataGenerator(keras.utils.Sequence):
 
     def __data_generation_predict(self, list_indices_temp):
         "Generates data containing batch_size samples"  # X : (n_samples, *dim, n_channels)
-        X = np.empty((self.batch_size, self.dim[0], self.dim[1], len(self.features)))
-        y = np.empty((self.batch_size, self.dim[0], self.dim[1]), dtype=int)
+        X = np.zeros((self.batch_size, self.dim[0], self.dim[1], len(self.features)), dtype=np.float32)
+        y = np.zeros((self.batch_size, self.dim[0], self.dim[1]), dtype=np.float32)
         # Initialization
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):

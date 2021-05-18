@@ -238,12 +238,12 @@ class CMFit(ulog.Loggable):
         data *= 51
         skio.imsave(path, data)
 
-    def split(self):
+    def split(self, test_products):
         """
         Read the files in self.path_input_dir, and split them according to self.split_ratio_val, self.split_ratio_test.
         The results are written to output/splits.json.
         """
-        self.splits = generate_splits(self.path_data_dir, self.split_ratio_val, self.split_ratio_test)
+        self.splits = generate_splits(self.path_data_dir, self.split_ratio_val, test_products)
 
         self.log.info(
             (
@@ -259,7 +259,7 @@ class CMFit(ulog.Loggable):
                 test=len(self.splits['test']),
                 train_p=100 * len(self.splits['train']) / self.splits['total'],
                 val_p=100 * len(self.splits['val']) / self.splits['total'],
-                test_p=100 * len(self.splits['test']) / self.splits['total']
+                test_p=100 * len(test_products)
             )
         )
 
@@ -355,7 +355,7 @@ class CMFit(ulog.Loggable):
         gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
         return gbytes
 
-    def train(self, test_products, trainer_name='unet', pretrained_weights=False):
+    def train(self, trainer_name='unet', pretrained_weights=False):
         """
         Fit a model to the training dataset (obtained from a splitting operation).
         """
@@ -365,7 +365,6 @@ class CMFit(ulog.Loggable):
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
         self.params["test_mode"] = False
-        self.params["test_products_list"] = test_products
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -406,7 +405,7 @@ class CMFit(ulog.Loggable):
                                  validation_generator, model_name)
         draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
-    def parameter_tune(self, test_products, trainer_name='unet', pretrained_weights=False):
+    def parameter_tune(self, trainer_name='unet', pretrained_weights=False):
         """
         Tune hyperparameters with tensorboard.
         """
@@ -416,7 +415,6 @@ class CMFit(ulog.Loggable):
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
         self.params["test_mode"] = False
-        self.params["test_products_list"] = test_products
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -463,7 +461,7 @@ class CMFit(ulog.Loggable):
                                          validation_generator, model_name)
                 #draw_history_plots(history, self.experiment_name, self.experiment_res_folder)
 
-    def predict(self, path, path_weights, test_products):
+    def predict(self, path, path_weights):
         """
         Predict on a data cube, using model weights from a specific file.
         Prediction results are stored in output/prediction.png.
@@ -491,7 +489,6 @@ class CMFit(ulog.Loggable):
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
         self.params["test_mode"] = False
-        self.params["test_products_list"] = test_products
 
         # Read splits again
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
@@ -513,10 +510,8 @@ class CMFit(ulog.Loggable):
         y_pred = np.argmax(predictions, axis=3)
         classes = valid_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
-        predictions = tf.cast(predictions, tf.float32)
-        classes_f1 = tf.cast(classes, tf.float32)
 
-        f1_kmask = np.round(self.set_batches_f1(classes_f1, predictions, 20), 2)
+        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 20), 2)
 
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
@@ -535,9 +530,7 @@ class CMFit(ulog.Loggable):
 
         sen2cor = valid_generator.get_sen2cor()
         y_sen2cor = np.argmax(sen2cor, axis=3)
-        sen2cor = tf.cast(sen2cor, tf.float32)
-        classes_f1 = tf.cast(classes, tf.float32)
-        f1_sen2cor = np.round(self.set_batches_f1(classes_f1, sen2cor, 20), 2)
+        f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 20), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
@@ -563,7 +556,7 @@ class CMFit(ulog.Loggable):
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
 
-    def validation(self, datadir, path_weights, test_products):
+    def validation(self, datadir, path_weights):
         """
         Validate predicted data
         Create folder with substracted images
@@ -610,7 +603,7 @@ class CMFit(ulog.Loggable):
         self.save_to_img("output/model_v1/prediction.png", class_mask)
         self.save_to_img_contrast("output/model_v1/prediction_contrast.png", class_mask)"""
 
-    def test(self, product_name, path_weights, test_products):
+    def test(self, product_name, path_weights):
 
         self.get_model_by_name(self.model_arch)
 
@@ -633,7 +626,6 @@ class CMFit(ulog.Loggable):
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
         self.params["test_mode"] = False
-        self.params["test_product_list"] = test_products
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
