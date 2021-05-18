@@ -107,7 +107,7 @@ def main():
             cmf.parameter_tune(parsed_test_products, args.tune)
         elif args.test:
             """ Evaluation on all test dataset that marked in parsed_test_products """
-            cmf.test(args.test, args.weights, parsed_test_products)
+            cmf.test(args.test, args.weights)
         elif args.statistic:
             """ Output per class statistic for labels """
             cmf.run_stats()
