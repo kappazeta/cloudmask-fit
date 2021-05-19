@@ -3,19 +3,28 @@ import numpy as np
 import random
 
 
-def generate_splits(path_input, val_ratio, test_ratio):
+def generate_splits(path_input, val_ratio, test_products):
+    """ Generate train and validation split accoring to ratio and tes split read from test products file"""
     all_indices = [f for f in os.listdir(path_input) if
                    os.path.isfile(os.path.join(path_input, f)) and os.path.join(path_input, f).endswith('.nc')]
     all_indices_fullname = [os.path.join(path_input, index) for index in all_indices]
-    total_length = len(all_indices)
+    test_indices = []
+    train_val_indices = []
+    for filename in all_indices:
+        filename_spl = filename.split("/")[-1]
+        filename_sub = filename_spl.split("_")
+        filename_sub = filename_sub[0] + "_" + filename_sub[1]
+        if filename_sub in test_products:
+            test_indices.append(os.path.join(path_input, filename))
+        elif filename_sub not in test_products:
+            train_val_indices.append(os.path.join(path_input, filename))
+    total_length = len(train_val_indices)
 
-    validation_test_number = int((val_ratio + test_ratio) * total_length)
-    test_number = int(test_ratio * total_length)
+    validation_test_number = int(val_ratio * total_length)
 
-    val_test_indices = random.sample(all_indices_fullname, validation_test_number)
-    test_indices = random.sample(val_test_indices, test_number)
-    val_indices = list(set(val_test_indices) - set(test_indices))
-    train_indices = list(set(all_indices_fullname) - set(val_test_indices))
+    val_test_indices = random.sample(train_val_indices, validation_test_number)
+    val_indices = list(set(val_test_indices))
+    train_indices = list(set(train_val_indices) - set(val_test_indices))
 
     dictionary_out = {
         'total': total_length,
