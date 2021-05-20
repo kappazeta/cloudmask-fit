@@ -94,13 +94,6 @@ def main():
             """ Mode for prediction on all files in specific folder that should have labels, 
                 calculation metrics and confusion matrix """
             cmf.validation(args.validate, args.weights)
-        elif args.train:
-            """ Mode for training model """
-            cmf.split(parsed_test_products)
-            if args.pretrain:
-                cmf.train(args.train, args.pretrain)
-            else:
-                cmf.train(args.train)
         elif args.tune:
             """ Parameter tuning mode """
             cmf.split(parsed_test_products)
@@ -111,6 +104,13 @@ def main():
         elif args.statistic:
             """ Output per class statistic for labels """
             cmf.run_stats()
+        elif args.train:
+            """ Mode for training model """
+            cmf.split(parsed_test_products)
+            if args.pretrain:
+                cmf.train(args.train, args.pretrain)
+            else:
+                cmf.train(args.train)
 
     except Exception as e:
         if log is not None:
