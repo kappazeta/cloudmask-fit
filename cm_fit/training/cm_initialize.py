@@ -634,7 +634,7 @@ class CMFit(ulog.Loggable):
             dictionary = json.load(fo)
 
         test_generator = DataGenerator(dictionary['test'], **self.params)
-        test_generator.get_labels(dictionary['test'], self.prediction_path, self.test_path, self.classes)
+        test_generator.get_labels(dictionary['test'], self.test_path, self.classes)
 
         predictions = self.model.predict(test_generator)
         y_pred = np.argmax(predictions, axis=3)
