@@ -340,7 +340,7 @@ class DataGenerator(Sequence):
                         print("Label for " + file + " not found")
         return y
 
-    def get_sen2cor(self):
+    def get_sen2cor(self, store_path):
         y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(self.list_indices):
@@ -349,45 +349,81 @@ class DataGenerator(Sequence):
                     try:
                         sen2cor = np.asarray(root["SCL"])
                         y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+
+                        sen2cor = sen2cor * 63 + 3
+                        sen2cor[sen2cor > 255] = 20
+
+                        sen2cor = sen2cor.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(sen2cor)
+                        file_name = file.split(".")[0].split("/")[-1]
+                        im.save(store_path + "/" + file_name + "/SCL.png")
                     except:
                         print("Sen2Cor for confusion " + file + " not found")
         return y
 
-    def get_s2cloudless(self):
+    def get_s2cloudless(self, store_path):
         y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     try:
-                        sen2cor = np.asarray(root["SS2C"])
-                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                        ss2c = np.asarray(root["SS2C"])
+                        y[i] = np_utils.to_categorical(ss2c, self.num_classes)
+
+                        ss2c = ss2c * 63 + 3
+                        ss2c[ss2c > 255] = 20
+
+                        ss2c = ss2c.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(ss2c)
+                        file_name = file.split(".")[0].split("/")[-1]
+                        im.save(store_path + "/" + file_name + "/SS2C.png")
                     except:
                         print("S2cloudless for confusion " + file + " not found")
         return y
 
-    def get_maja(self):
+    def get_maja(self, store_path):
         y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     try:
-                        sen2cor = np.asarray(root["MAJAC"])
-                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                        maja = np.asarray(root["MAJAC"])
+                        y[i] = np_utils.to_categorical(maja, self.num_classes)
+
+                        maja = maja * 63 + 3
+                        maja[maja > 255] = 20
+
+                        maja = maja.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(maja)
+                        file_name = file.split(".")[0].split("/")[-1]
+                        im.save(store_path + "/" + file_name + "/MAJA.png")
                     except:
                         print("Maja for confusion " + file + " not found")
         return y
 
-    def get_fmask(self):
+    def get_fmask(self, store_path):
         y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     try:
-                        sen2cor = np.asarray(root["FMC"])
-                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                        fmask = np.asarray(root["FMC"])
+                        y[i] = np_utils.to_categorical(fmask, self.num_classes)
+
+                        fmask = fmask * 63 + 3
+                        fmask[fmask > 255] = 20
+
+                        fmask = fmask.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(fmask)
+                        file_name = file.split(".")[0].split("/")[-1]
+                        im.save(store_path + "/" + file_name + "/FMASK.png")
                     except:
                         print("Fmask for confusion " + file + " not found")
         return y

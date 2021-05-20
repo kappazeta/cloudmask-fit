@@ -70,6 +70,7 @@ class CMFit(ulog.Loggable):
         self.experiment_res_folder = "results"
         self.prediction_path = self.experiment_res_folder + "/prediction"
         self.validation_path = self.experiment_res_folder + "/validation"
+        self.test_path = self.experiment_res_folder + "/test"
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
         self.plots_path = self.experiment_res_folder + "/plots"
@@ -112,6 +113,7 @@ class CMFit(ulog.Loggable):
         self.experiment_res_folder = "results/" + self.experiment_name
         self.prediction_path = self.experiment_res_folder + "/prediction"
         self.validation_path = self.experiment_res_folder + "/validation"
+        self.test_path = self.experiment_res_folder + "/test"
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
         self.plots_path = self.experiment_res_folder + "/plots"
@@ -143,6 +145,8 @@ class CMFit(ulog.Loggable):
             os.mkdir(self.prediction_path)
         if not os.path.exists(self.validation_path):
             os.mkdir(self.validation_path)
+        if not os.path.exists(self.test_path):
+            os.mkdir(self.test_path)
         if not os.path.exists(self.meta_data_path):
             os.mkdir(self.meta_data_path)
         if not os.path.exists(self.checkpoints_path):
@@ -624,18 +628,13 @@ class CMFit(ulog.Loggable):
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
 
-        file_specificator = product_name.rsplit('.', 1)[0]
-        date_match = file_specificator.rsplit('_', 1)[-1]
-        index_match = file_specificator.rsplit('_', 1)[0].rsplit('_', 1)[-1]
-
-        tile_paths = []
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
 
         test_generator = DataGenerator(dictionary['test'], **self.params)
-        test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
+        test_generator.get_labels(dictionary['test'], self.prediction_path, self.test_path, self.classes)
 
         predictions = self.model.predict(test_generator)
         y_pred = np.argmax(predictions, axis=3)
@@ -657,7 +656,7 @@ class CMFit(ulog.Loggable):
         plt.close()
 
         for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
+            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.test_path)
 
         """for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
@@ -666,7 +665,7 @@ class CMFit(ulog.Loggable):
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_' + self.classes[i] + '_test.png'))
             plt.close()"""
 
-        sen2cor = test_generator.get_sen2cor()
+        sen2cor = test_generator.get_sen2cor(self.test_path)
         y_sen2cor = np.argmax(sen2cor, axis=3)
         f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 10), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
@@ -682,7 +681,7 @@ class CMFit(ulog.Loggable):
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_sen2cor.png'))
         plt.close()
 
-        fmask = test_generator.get_fmask()
+        fmask = test_generator.get_fmask(self.test_path)
         y_fmask = np.argmax(fmask, axis=3)
         f1_fmask = np.round(self.set_batches_f1(classes, fmask, 10), 2)
         y_fmask_fl = y_fmask.flatten()
@@ -698,7 +697,7 @@ class CMFit(ulog.Loggable):
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_fmask.png'))
         plt.close()
 
-        s2cloudless = test_generator.get_s2cloudless()
+        s2cloudless = test_generator.get_s2cloudless(self.test_path)
         y_s2cloudless = np.argmax(s2cloudless, axis=3)
         f1_s2cloudless = np.round(self.set_batches_f1(classes, s2cloudless, 10), 2)
         y_s2cloudless_fl = y_s2cloudless.flatten()
@@ -714,7 +713,7 @@ class CMFit(ulog.Loggable):
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_s2cloudless.png'))
         plt.close()
 
-        maja = test_generator.get_maja()
+        maja = test_generator.get_maja(self.test_path)
         y_maja = np.argmax(maja, axis=3)
         f1_maja = np.round(self.set_batches_f1(classes, maja, 10), 2)
         y_maja_fl = y_maja.flatten()
