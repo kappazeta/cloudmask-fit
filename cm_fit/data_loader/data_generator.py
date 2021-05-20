@@ -220,12 +220,12 @@ class DataGenerator(Sequence):
                     im = Image.fromarray(label)
                     im.save(path_prediction + "/" + file_name + "/label.png")
 
-                    for j, curr_cl in enumerate(classes):
+                    """for j, curr_cl in enumerate(classes):
                         saving_filename = path_prediction + "/" + file_name + "/" + curr_cl
                         curr_array = y[:, :, j].copy()
                         curr_array *= 255
                         curr_array = curr_array.astype(np.uint8)
-                        skio.imsave(saving_filename + ".png", curr_array)
+                        skio.imsave(saving_filename + ".png", curr_array)"""
         return True
 
     def get_normal_par(self, list_indices_temp):
@@ -331,6 +331,8 @@ class DataGenerator(Sequence):
                         # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
                         im = Image.fromarray(sen2cor)
                         file_name = file.split(".")[0].split("/")[-1]
+                        if not os.path.exists(store_path + "/" + file_name):
+                            os.mkdir(store_path + "/" + file_name)
                         im.save(store_path + "/" + file_name + "/SCL.png")
                     except:
                         print("Sen2Cor for confusion " + file + " not found")
