@@ -630,11 +630,11 @@ class CMFit(ulog.Loggable):
 
         tile_paths = []
 
-        for subfolder in os.listdir(self.path_data_dir):
-            if subfolder.startswith(index_match + "_" + date_match):
-                tile_paths.append(os.path.join(self.path_data_dir, subfolder))
-        test_generator = DataGenerator(tile_paths, **self.params)
-        test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
+        path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
+        with open(path_splits, "r") as fo:
+            dictionary = json.load(fo)
+
+        test_generator = DataGenerator(dictionary['test'], **self.params)
         test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
 
         predictions = self.model.predict(test_generator)
@@ -642,26 +642,94 @@ class CMFit(ulog.Loggable):
         classes = test_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
 
-        y_pred = y_pred.flatten()
-        y_true = y_true.flatten()
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true, y_pred, self.classes)
-        plot_confusion_matrix()
-        plot_confusion_matrix(cm_normalize, self.classes, self.experiment_name + ": confusion matrix", normalized=True)
-        plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot_test.png'))
+        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 10), 2)
+
+        y_pred_fl = y_pred.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
+        print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Test confusion matrix for KappaMask, dice score: " + str(f1_kmask),
+                              normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_plot.png'))
         plt.close()
 
-        for i, matrix in enumerate(cm_multi_norm):
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
+
+        """for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
             plot_confusion_matrix(matrix, ["Other", self.classes[i]],
                                   self.experiment_name + ": cf_matrix " + self.classes[i], normalized=True)
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_' + self.classes[i] + '_test.png'))
-            plt.close()
+            plt.close()"""
 
-        classes = self.model.predict_classes_gen(test_generator)
+        sen2cor = test_generator.get_sen2cor()
+        y_sen2cor = np.argmax(sen2cor, axis=3)
+        f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 10), 2)
+        y_sen2cor_fl = y_sen2cor.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
+                                                                                    self.classes)
+        print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
+                              normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_sen2cor.png'))
+        plt.close()
 
-        print(predictions.shape)
-        for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(tile_paths[i], prediction, classes[i], self.prediction_path)
+        fmask = test_generator.get_fmask()
+        y_fmask = np.argmax(fmask, axis=3)
+        f1_fmask = np.round(self.set_batches_f1(classes, fmask, 10), 2)
+        y_fmask_fl = y_fmask.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
+                                                                                    self.classes)
+        print(confusion_matrix(y_true_fl, y_fmask_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Test confusion matrix for Fmask, dice score: " + str(f1_fmask),
+                              normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_fmask.png'))
+        plt.close()
+
+        s2cloudless = test_generator.get_s2cloudless()
+        y_s2cloudless = np.argmax(s2cloudless, axis=3)
+        f1_s2cloudless = np.round(self.set_batches_f1(classes, s2cloudless, 10), 2)
+        y_s2cloudless_fl = y_s2cloudless.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
+                                                                                    self.classes)
+        print(confusion_matrix(y_true_fl, y_s2cloudless_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Test confusion matrix for S2cloudless, dice score: " + str(f1_s2cloudless),
+                              normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_s2cloudless.png'))
+        plt.close()
+
+        maja = test_generator.get_maja()
+        y_maja = np.argmax(maja, axis=3)
+        f1_maja = np.round(self.set_batches_f1(classes, maja, 10), 2)
+        y_maja_fl = y_maja.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
+                                                                                    self.classes)
+        print(confusion_matrix(y_true_fl, y_maja_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, self.classes,
+                              "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
+                              normalized=True)
+        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
+        plt.close()
+
         return
 
     def selecting(self, product_name, path_weights):

@@ -353,6 +353,45 @@ class DataGenerator(Sequence):
                         print("Sen2Cor for confusion " + file + " not found")
         return y
 
+    def get_s2cloudless(self):
+        y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
+        # Initialization
+        for i, file in enumerate(self.list_indices):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        sen2cor = np.asarray(root["SS2C"])
+                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                    except:
+                        print("S2cloudless for confusion " + file + " not found")
+        return y
+
+    def get_maja(self):
+        y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
+        # Initialization
+        for i, file in enumerate(self.list_indices):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        sen2cor = np.asarray(root["MAJAC"])
+                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                    except:
+                        print("Maja for confusion " + file + " not found")
+        return y
+
+    def get_fmask(self):
+        y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
+        # Initialization
+        for i, file in enumerate(self.list_indices):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        sen2cor = np.asarray(root["FMC"])
+                        y[i] = np_utils.to_categorical(sen2cor, self.num_classes)
+                    except:
+                        print("Fmask for confusion " + file + " not found")
+        return y
+
 
 class TestDataGenerator(keras.utils.Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, shuffle=False):
