@@ -184,7 +184,7 @@ class DataGenerator(Sequence):
 
                     #skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
 
-    def get_labels(self, list_indices_temp, path_prediction, path_val, classes):
+    def get_labels(self, list_indices_temp, path_prediction, classes):
         """Save labels to folder"""
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
@@ -193,33 +193,19 @@ class DataGenerator(Sequence):
                     data_bands = [np.asarray(root[f])
                                   for i, f in enumerate(["TCI_R", "TCI_G", "TCI_B"])]
 
-                    # data_bands = [(np.asarray(root[f]) - self.min_v[i + 1]) / (self.max_v[i + 1]-self.min_v[i + 1])
-                    #              for i, f in enumerate(["B02", "B03", "B04"])]
                     data_bands = np.stack(data_bands)
-                    # data_bands /= np.max(np.abs(data_bands), axis=0)
-                    # data_bands = (data_bands-np.min(data_bands))/\
-                    #             (np.max(data_bands)-np.min(data_bands))
-                    # data_bands *= 255.0
-                    # data_bands *= (255.0/(np.max(np.abs(data_bands))))
                     data_bands = np.rollaxis(data_bands, 0, 3)
                     try:
                         label = np.asarray(root[self.label_set])
                         y = np_utils.to_categorical(label, self.num_classes)
-                        sen2cor_cc = np.asarray(root['S2CC'])
-                        sen2cor_cs = np.asarray(root['S2CS'])
-                        sen2cor_scl = np.asarray(root['SCL'])
                     except:
-                        sen2cor_cc = np.asarray(root['S2CC'])
-                        sen2cor_cs = np.asarray(root['S2CS'])
-                        sen2cor_scl = np.asarray(root['SCL'])
+                        print("No label for " + file)
                     # img = Image.fromarray(data_bands, 'RGB')
                     file_name = file.split(".")[0].split("/")[-1]
                     # img.save(path_prediction+"/"+file_name+"orig.png")
 
                     if not os.path.exists(path_prediction + "/" + file_name):
                         os.mkdir(path_prediction + "/" + file_name)
-                    if not os.path.exists(path_val + "/" + file_name):
-                        os.mkdir(path_val + "/" + file_name)
 
                     # Lossy conversion Range [-0.5882352590560913, 6.766853332519531].
                     unique_before = np.unique(data_bands)
@@ -234,18 +220,6 @@ class DataGenerator(Sequence):
                     im = Image.fromarray(label)
                     im.save(path_prediction + "/" + file_name + "/label.png")
 
-                    # sen2cor_cc = sen2cor_cc.astype(np.uint8)
-                    # sen2cor_cs = sen2cor_cs.astype(np.uint8)
-                    # sen2cor_cs *= 255
-                    sen2cor_scl = sen2cor_scl * 63 + 3
-                    sen2cor_scl[sen2cor_scl > 255] = 20
-
-                    sen2cor_scl = sen2cor_scl.astype(np.uint8)
-                    # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
-                    im = Image.fromarray(sen2cor_scl)
-                    im.save(path_prediction + "/" + file_name + "/SCL.png")
-
-                    skio.imsave(path_prediction + "/" + file_name + "/S2CC.png", sen2cor_cc)
                     for j, curr_cl in enumerate(classes):
                         saving_filename = path_prediction + "/" + file_name + "/" + curr_cl
                         curr_array = y[:, :, j].copy()
