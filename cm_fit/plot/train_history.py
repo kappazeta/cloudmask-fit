@@ -50,15 +50,17 @@ def draw_4lines(history, set, results_folder, classes):
     return
 
 
-def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.Blues, smaller=False):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalized=True`.
 
     Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
-    #cm_smaller = cm[1:5, 1:5]
-    cm_smaller = cm
+    if smaller:
+        cm_smaller = cm[1:5, 1:5]
+    else:
+        cm_smaller = cm
     print(cm_smaller)
     fig, ax = plt.subplots(figsize=(24, 24))
     im = ax.imshow(cm_smaller, interpolation='nearest', cmap=cmap)
