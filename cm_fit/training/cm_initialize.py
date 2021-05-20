@@ -646,6 +646,8 @@ class CMFit(ulog.Loggable):
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        print("Unique KappaMask ", np.unique(y_pred_fl))
+        print("F1 KappaMask ", f1_kmask)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
         print(cm_normalize)
@@ -672,6 +674,7 @@ class CMFit(ulog.Loggable):
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
         print("Unique Sen2Cor ", np.unique(y_sen2cor_fl))
+        print("F1 Sen2Cor ", f1_sen2cor)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
@@ -689,6 +692,7 @@ class CMFit(ulog.Loggable):
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
         print("Unique Fmask ", np.unique(y_fmask_fl))
+        print("F1 Fmask ", f1_fmask)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_fmask_fl, unique_true, normalize='true'))
@@ -706,6 +710,7 @@ class CMFit(ulog.Loggable):
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
         print("Unique s2cloudless ", np.unique(y_s2cloudless_fl))
+        print("F1 s2cloudless ", f1_s2cloudless)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_s2cloudless_fl, unique_true, normalize='true'))
@@ -722,6 +727,8 @@ class CMFit(ulog.Loggable):
         y_maja_fl = y_maja.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        print("Unique maja ", np.unique(y_maja_fl))
+        print("F1 maja ", f1_maja)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_maja_fl, unique_true, normalize='true'))
