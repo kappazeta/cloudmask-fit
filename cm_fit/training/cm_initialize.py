@@ -671,10 +671,11 @@ class CMFit(ulog.Loggable):
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        print("Unique Sen2Cor ", np.unique(y_sen2cor_fl))
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        print("Sen2Cor", cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
                               normalized=True)
@@ -687,10 +688,11 @@ class CMFit(ulog.Loggable):
         y_fmask_fl = y_fmask.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        print("Unique Fmask ", np.unique(y_fmask_fl))
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_fmask_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        print("Fmask ", cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Test confusion matrix for Fmask, dice score: " + str(f1_fmask),
                               normalized=True)
@@ -703,10 +705,11 @@ class CMFit(ulog.Loggable):
         y_s2cloudless_fl = y_s2cloudless.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        print("Unique s2cloudless ", np.unique(y_s2cloudless_fl))
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_s2cloudless_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        print("s2cloudless ", cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Test confusion matrix for S2cloudless, dice score: " + str(f1_s2cloudless),
                               normalized=True)
