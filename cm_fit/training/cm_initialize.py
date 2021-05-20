@@ -641,7 +641,7 @@ class CMFit(ulog.Loggable):
         classes = test_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
 
-        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 10), 2)
+        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 1), 2)
 
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
@@ -669,7 +669,7 @@ class CMFit(ulog.Loggable):
 
         sen2cor = test_generator.get_sen2cor(self.test_path)
         y_sen2cor = np.argmax(sen2cor, axis=3)
-        f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 10), 2)
+        f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 1), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
@@ -681,13 +681,13 @@ class CMFit(ulog.Loggable):
         print("Sen2Cor", cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
-                              normalized=True)
+                              normalized=True, smaller=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_sen2cor.png'))
         plt.close()
 
         fmask = test_generator.get_fmask(self.test_path)
         y_fmask = np.argmax(fmask, axis=3)
-        f1_fmask = np.round(self.set_batches_f1(classes, fmask, 10), 2)
+        f1_fmask = np.round(self.set_batches_f1(classes, fmask, 1), 2)
         y_fmask_fl = y_fmask.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
@@ -705,7 +705,7 @@ class CMFit(ulog.Loggable):
 
         s2cloudless = test_generator.get_s2cloudless(self.test_path)
         y_s2cloudless = np.argmax(s2cloudless, axis=3)
-        f1_s2cloudless = np.round(self.set_batches_f1(classes, s2cloudless, 10), 2)
+        f1_s2cloudless = np.round(self.set_batches_f1(classes, s2cloudless, 1), 2)
         y_s2cloudless_fl = y_s2cloudless.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
@@ -723,7 +723,7 @@ class CMFit(ulog.Loggable):
 
         maja = test_generator.get_maja(self.test_path)
         y_maja = np.argmax(maja, axis=3)
-        f1_maja = np.round(self.set_batches_f1(classes, maja, 10), 2)
+        f1_maja = np.round(self.set_batches_f1(classes, maja, 1), 2)
         y_maja_fl = y_maja.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
