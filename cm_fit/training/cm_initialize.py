@@ -682,7 +682,7 @@ class CMFit(ulog.Loggable):
         print("F1 Sen2Cor ", f1_sen2cor)
         f1_dic = {}
         for i, label in enumerate(unique_true):
-            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Sen2Cor ", f1_dic)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
@@ -705,7 +705,7 @@ class CMFit(ulog.Loggable):
         print("F1 Fmask ", f1_fmask)
         f1_dic = {}
         for i, label in enumerate(unique_true):
-            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Fmask ", f1_dic)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
@@ -728,7 +728,7 @@ class CMFit(ulog.Loggable):
         print("F1 s2cloudless ", f1_s2cloudless)
         f1_dic = {}
         for i, label in enumerate(unique_true):
-            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("S2cloudless ", f1_dic)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
@@ -751,7 +751,7 @@ class CMFit(ulog.Loggable):
         print("F1 maja ", f1_maja)
         f1_dic = {}
         for i, label in enumerate(unique_true):
-            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Maja ", f1_dic)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
