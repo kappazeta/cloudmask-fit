@@ -628,7 +628,6 @@ class CMFit(ulog.Loggable):
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
 
-
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
             dictionary = json.load(fo)
@@ -646,13 +645,15 @@ class CMFit(ulog.Loggable):
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique KappaMask ", np.unique(y_pred_fl))
+        print("Unique KappaMask ", np.unique(y_pred_fl), "Original ", unique_true)
         print("F1 KappaMask ", f1_kmask)
         f1_dic = {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Kappa ", f1_dic)
+        file = open(self.plots_path + "/test_f1_scores.txt", "w")
+        file.write("KappaMask F1: " + str(f1_dic) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
         print(cm_normalize)
@@ -663,7 +664,7 @@ class CMFit(ulog.Loggable):
         plt.close()
 
         for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.test_path)
+            self.save_masks_contrast(dictionary['test'][i], prediction, y_pred[i], self.test_path)
 
         """for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
@@ -685,6 +686,7 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Sen2Cor ", f1_dic)
+        file.write("Sen2Cor F1: " + str(f1_dic) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
@@ -708,6 +710,7 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Fmask ", f1_dic)
+        file.write("Fmask F1: " + str(f1_dic) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_fmask_fl, unique_true, normalize='true'))
@@ -731,6 +734,7 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("S2cloudless ", f1_dic)
+        file.write("S2cloudless F1: " + str(f1_dic) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_s2cloudless_fl, unique_true, normalize='true'))
@@ -754,6 +758,8 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
         print("Maja ", f1_dic)
+        file.write("Maja F1: " + str(f1_dic) + "\n")
+        file.close()
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_maja_fl, unique_true, normalize='true'))
