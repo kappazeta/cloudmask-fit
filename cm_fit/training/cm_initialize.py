@@ -368,7 +368,6 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
