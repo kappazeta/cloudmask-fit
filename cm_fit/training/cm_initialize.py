@@ -387,7 +387,8 @@ class CMFit(ulog.Loggable):
         self.model.set_learning_rate(self.learning_rate)
 
         # Construct and compile the model.
-        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), pretrained_weights)
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), layers=5, units=64,
+                             pretrained_weights=pretrained_weights)
         self.model.model.summary()
         self.model.compile(self.loss_name)
 
