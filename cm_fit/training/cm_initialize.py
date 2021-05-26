@@ -524,7 +524,7 @@ class CMFit(ulog.Loggable):
         print(cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Confusion matrix for KappaMask, dice score: " + str(f1_kmask),
-                              normalized=True)
+                              normalized=True, smaller=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
         plt.close()
 
