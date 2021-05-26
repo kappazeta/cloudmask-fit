@@ -531,7 +531,7 @@ class CMFit(ulog.Loggable):
         for i, prediction in enumerate(predictions):
             self.save_masks_contrast(dictionary['val'][i], prediction, y_pred[i], self.prediction_path)
 
-        sen2cor = valid_generator.get_sen2cor()
+        sen2cor = valid_generator.get_sen2cor(self.prediction_path)
         y_sen2cor = np.argmax(sen2cor, axis=3)
         f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 20), 2)
         y_sen2cor_fl = y_sen2cor.flatten()
