@@ -691,7 +691,7 @@ class CMFit(ulog.Loggable):
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
         print("Sen2Cor", cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes,
+        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
                               "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
                               normalized=True, smaller=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_sen2cor.png'))
@@ -715,7 +715,7 @@ class CMFit(ulog.Loggable):
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_fmask_fl, unique_true, normalize='true'))
         print("Fmask ", cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes,
+        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
                               "Test confusion matrix for Fmask, dice score: " + str(f1_fmask),
                               normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_fmask.png'))
@@ -739,7 +739,7 @@ class CMFit(ulog.Loggable):
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_s2cloudless_fl, unique_true, normalize='true'))
         print("s2cloudless ", cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes,
+        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
                               "Test confusion matrix for S2cloudless, dice score: " + str(f1_s2cloudless),
                               normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_s2cloudless.png'))
@@ -764,7 +764,7 @@ class CMFit(ulog.Loggable):
                                                                                     self.classes)
         print(confusion_matrix(y_true_fl, y_maja_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes,
+        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
                               "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
                               normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
