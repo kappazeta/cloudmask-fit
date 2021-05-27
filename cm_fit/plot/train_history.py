@@ -58,7 +58,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
     if smaller:
-        cm_smaller = cm[1:5, 1:5]
+        cm_smaller = cm[0:5, 0:5]
     else:
         cm_smaller = cm
     print(cm_smaller)
