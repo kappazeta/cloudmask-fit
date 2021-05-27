@@ -62,6 +62,8 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     else:
         cm_smaller = cm
     print(cm_smaller)
+    print(len(class_list))
+    print(cm_smaller.shape[0], cm_smaller.shape[1])
     fig, ax = plt.subplots(figsize=(24, 24))
     im = ax.imshow(cm_smaller, interpolation='nearest', cmap=cmap)
     # We want to show all ticks...
