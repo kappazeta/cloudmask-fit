@@ -171,6 +171,22 @@ class CMModel(log.Loggable):
         return f1
 
     @staticmethod
+    def precision_m(y_true, y_pred):
+        TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        Pred_Positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+
+        precision = TP / (Pred_Positives + K.epsilon())
+        return precision
+
+    @staticmethod
+    def recall_m(y_true, y_pred):
+        TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        Positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+
+        recall = TP / (Positives + K.epsilon())
+        return recall
+
+    @staticmethod
     def dice_loss(y_true, y_pred):
         def dice_coef(y_true, y_pred, smooth=1):
             """
@@ -257,7 +273,7 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_custom_f1", mode='max', patience=50)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_custom_f1", mode='max', patience=20)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
@@ -268,7 +284,7 @@ class CMModel(log.Loggable):
                 callbacks.append(model_checkpoint)
 
             lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_custom_f1", factor=0.5, patience=30, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
+                monitor="val_custom_f1", factor=0.5, patience=20, mode='max', min_delta=0.0001, cooldown=0, min_lr=0
             )
             callbacks.append(lr_reducer)
             tensorboard = TensorBoard(log_dir='logs/{}'.format(model_name), histogram_freq=1, profile_batch=2)
