@@ -522,7 +522,7 @@ class CMFit(ulog.Loggable):
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
+        plot_confusion_matrix(cm_normalize, self.classes,
                               "Confusion matrix for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_plot.png'))
@@ -657,9 +657,9 @@ class CMFit(ulog.Loggable):
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, self.classes,
+        plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
                               "Test confusion matrix for KappaMask, dice score: " + str(f1_kmask),
-                              normalized=True, smaller=True)
+                              normalized=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_plot.png'))
         plt.close()
 
