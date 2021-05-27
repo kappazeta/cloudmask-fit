@@ -713,8 +713,8 @@ class CMFit(ulog.Loggable):
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
-            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
-            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
@@ -744,8 +744,8 @@ class CMFit(ulog.Loggable):
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
-            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
-            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
@@ -775,8 +775,8 @@ class CMFit(ulog.Loggable):
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
-            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
-            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
@@ -806,8 +806,8 @@ class CMFit(ulog.Loggable):
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
-            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
-            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
