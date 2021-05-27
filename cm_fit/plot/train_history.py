@@ -68,8 +68,8 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     ax.set(xticks=np.arange(cm_smaller.shape[1]),
            yticks=np.arange(cm_smaller.shape[0]),
            # ... and label them with the respective list entries
-           xticklabels=class_list[1:5], yticklabels=class_list[1:5],
-            )
+           xticklabels=class_list, yticklabels=class_list,
+        )
     plt.xlabel('Predicted label', fontsize=40)
     plt.ylabel('True label', fontsize=40)
     ax.set_title(title, pad=30, fontsize=40)
