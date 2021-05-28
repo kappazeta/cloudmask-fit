@@ -200,17 +200,25 @@ class CMModel(log.Loggable):
 
     @staticmethod
     def weighted_dice_loss(y_true, y_pred):
-        def dice_coef(y_true, y_pred, smooth=1):
-            """
-            Dice = (2*|X & Y|)/ (|X|+ |Y|)
-                 =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
-            ref: https://arxiv.org/pdf/1606.04797v1.pdf
-            """
-            intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-            return (2. * intersection + smooth) / (K.sum(K.square(y_true), -1) + K.sum(K.square(y_pred), -1) + smooth)
-        loss = dice_coef(y_true, y_pred)
+        def recall_m(y_true, y_pred):
+            TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            Positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+
+            recall = TP / (Positives + K.epsilon())
+            return recall
+
+        def precision_m(y_true, y_pred):
+            TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            Pred_Positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+
+            precision = TP / (Pred_Positives + K.epsilon())
+            return precision
+
+        precision, recall = precision_m(y_true, y_pred), recall_m(y_true, y_pred)
+
+        f1 = 2 * ((precision * recall) / (precision + recall + K.epsilon()))
         weights = K.constant([1, 1, 4.6, 2.8, 1.2, 1])
-        weighted_loss = loss * K.sum(y_true * weights, axis=-1)
+        weighted_loss = f1 * K.sum(y_true * weights, axis=-1)
         return weighted_loss
 
     @staticmethod
