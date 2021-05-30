@@ -296,9 +296,6 @@ class DataGenerator(Sequence):
                     # data_bands = data_bands.reshape((self.dim[0], self.dim[1], len(self.features)))
                     X[i,] = data_bands
 
-        X = tf.cast(X, tf.float32)
-        y = tf.cast(y, tf.float32)
-
         return X, y#, sample_weigths
 
     def get_classes(self):
