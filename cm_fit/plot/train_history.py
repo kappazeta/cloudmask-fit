@@ -91,7 +91,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
         for j in range(cm_smaller.shape[1]):
             ax.text(j, i, format(cm_smaller[i, j], fmt),
                     ha="center", va="center",
-                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=36
+                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=46
                     )
     fig.tight_layout()
     return ax
