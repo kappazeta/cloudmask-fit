@@ -81,8 +81,8 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor", fontsize=40)
-    plt.setp(ax.get_yticklabels(), fontsize=40)
+             rotation_mode="anchor", fontsize=36)
+    plt.setp(ax.get_yticklabels(), fontsize=36)
 
     # Loop over data dimensions and create text annotations.
     fmt = '.2f' if normalized else 'd'
@@ -91,7 +91,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
         for j in range(cm_smaller.shape[1]):
             ax.text(j, i, format(cm_smaller[i, j], fmt),
                     ha="center", va="center",
-                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=46
+                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=50
                     )
     fig.tight_layout()
     return ax
