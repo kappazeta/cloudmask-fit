@@ -843,7 +843,7 @@ class CMFit(ulog.Loggable):
         self.model.compile(self.loss_name)
 
         # Load model weights.
-        self.model.load_weights(path_weights)
+        self.model.load_weights(self.checkpoints_path + "/" + path_weights)
 
         # Create an array for storing the segmentation mask.
         probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
