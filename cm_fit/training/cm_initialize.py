@@ -74,6 +74,7 @@ class CMFit(ulog.Loggable):
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
         self.plots_path = self.experiment_res_folder + "/plots"
+        self.dataset_comparison_path = self.experiment_res_folder + "/cmix_comparison"
         self.pixel_window_size = 9
         self.features = []
         self.label_set = "Label"
@@ -117,6 +118,7 @@ class CMFit(ulog.Loggable):
         self.meta_data_path = self.experiment_res_folder + "/meta_data"
         self.checkpoints_path = self.experiment_res_folder + "/checkpoints"
         self.plots_path = self.experiment_res_folder + "/plots"
+        self.dataset_comparison_path = self.experiment_res_folder + "/cmix_comparison"
         if not os.path.isabs(self.path_data_dir):
             self.path_data_dir = os.path.abspath(self.path_data_dir)
 
@@ -147,6 +149,8 @@ class CMFit(ulog.Loggable):
             os.mkdir(self.validation_path)
         if not os.path.exists(self.test_path):
             os.mkdir(self.test_path)
+        if not os.path.exists(self.dataset_comparison_path):
+            os.mkdir(self.dataset_comparison_path)
         if not os.path.exists(self.meta_data_path):
             os.mkdir(self.meta_data_path)
         if not os.path.exists(self.checkpoints_path):
@@ -827,6 +831,70 @@ class CMFit(ulog.Loggable):
         plt.close()
 
         return
+
+    def dataset_comparison(self, path_weights):
+        self.get_model_by_name(self.model_arch)
+
+        # Propagate configuration parameters.
+        self.model.set_batch_size(self.batch_size_predict)
+
+        # Construct and compile the model.
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes))
+        self.model.compile(self.loss_name)
+
+        # Load model weights.
+        self.model.load_weights(path_weights)
+
+        # Create an array for storing the segmentation mask.
+        probabilities = np.zeros((self.dim[0], self.dim[1], len(self.classes)), dtype=np.float)
+        class_mask = np.zeros((self.dim[0], self.dim[1]), dtype=np.uint8)
+        self.params["features"] = self.features
+        self.params["batch_size"] = self.batch_size_predict
+        self.params["shuffle"] = False
+        self.params["label_set"] = self.label_set
+        self.params["normalization"] = self.normalization
+
+        all_indices = [f for f in os.listdir(self.path_data_dir) if
+                       os.path.isfile(os.path.join(self.path_data_dir, f)) and os.path.join(self.path_data_dir, f).endswith('.nc')]
+        all_indices_fullname = [os.path.join(self.path_data_dir, index) for index in all_indices]
+        data_generator = DataGenerator(all_indices_fullname, **self.params)
+        predictions = self.model.predict(data_generator)
+        y_pred = np.argmax(predictions, axis=3)
+        for i, prediction in enumerate(predictions):
+            self.save_masks_contrast(all_indices_fullname, prediction, y_pred[i], self.dataset_comparison_path)
+        classes = data_generator.get_classes()
+        y_true = np.argmax(classes, axis=3)
+
+        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 1), 2)
+
+        y_pred_fl = y_pred.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        print("Unique KappaMask ", np.unique(y_pred_fl), "Original ", unique_true)
+        print("F1 KappaMask ", f1_kmask)
+        f1_dic, precision, recall = {}, {}, {}
+        for i, label in enumerate(unique_true):
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            f1_dic[label] = f1_curr
+            precision[label] = prec_curr
+            recall[label] = rec_curr
+        print("Kappa ", f1_dic)
+        print("precision ", precision, " recall ", recall)
+        file = open(self.plots_path + "/dataset_comparison.txt", "w")
+        file.write("KappaMask F1: " + str(f1_dic) + " for " + self.label_set + "\n")
+        file.write("KappaMask Precision: " + str(precision) + "\n")
+        file.write("KappaMask Recall: " + str(recall) + "\n")
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
+        print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
+                              "Confusion matrix " + self.label_set + " for KappaMask, dice score: " + str(f1_kmask),
+                              normalized=True, smaller=True)
+        plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_' + self.label_set + '.png'))
+        plt.close()
+        file.close()
 
     def selecting(self, product_name, path_weights):
 

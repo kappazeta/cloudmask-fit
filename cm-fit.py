@@ -34,6 +34,8 @@ def main():
                    help="Prediction mode.")
     p.add_argument("-tune", "--tune", action="store", dest="tune", default=None,
                    help="Parameter tuning mode, argument pass a name for saved weights")
+    p.add_argument("-cmix", "--cmix", action="store", dest="cmix", default=None,
+                   help="CMIX validation dataset comparison mode")
     p.add_argument("-w", "--weights", action="store", dest="weights", default=None,
                    help="Path to the model weights to use for prediction.")
     p.add_argument("-c", "--config", action="store", dest="path_config", default="config/config_example.json",
@@ -104,6 +106,8 @@ def main():
         elif args.statistic:
             """ Output per class statistic for labels """
             cmf.run_stats()
+        elif args.cmix:
+            cmf.dataset_comparison(args.weights)
         elif args.train:
             """ Mode for training model """
             cmf.split(parsed_test_products)

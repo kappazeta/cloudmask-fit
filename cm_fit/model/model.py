@@ -165,7 +165,7 @@ class CMModel(log.Loggable):
         precision, recall = precision_m(y_true, y_pred), recall_m(y_true, y_pred)
 
         f1 = 2 * ((precision * recall) / (precision + recall + K.epsilon()))
-        weighted_f1 = f1 * K.sum(K.round(K.clip(y_true, 0, 1))) / K.sum(K.round(K.clip(y_true, 0, 1)))
+        weighted_f1 = f1 * K.round(K.clip(y_true, 0, 1)) / K.sum(K.round(K.clip(y_true, 0, 1)))
         weighted_f1 = K.sum(weighted_f1)
 
         return f1

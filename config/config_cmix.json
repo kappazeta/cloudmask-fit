@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "experiment_name": "finetune_june",
+  "input": {
+    "data_dir": "data/CESBIO/",
+    "test_products": "data/test_products.txt",
+    "label_set": "BHC",
+    "normalization": "minmax"
+  },
+  "split": {
+    "ratio": {
+      "test": 0,
+      "val": 0.2
+    }
+  },
+  "model": {
+    "architecture": "Unet",
+    "features": ["AOT", "B01", "B02", "B03", "B04", "B05", "B06", "B08", "B8A", "B09", "B11", "B12", "WVP"],
+    "pixel_window_size": 9
+  },
+  "train": {
+    "learning_rate": 0.0001,
+    "batch_size": 6,
+    "num_epochs": 200,
+    "loss": "dice_loss"
+  },
+  "predict": {
+    "batch_size": 1
+  }
+}
