@@ -858,6 +858,7 @@ class CMFit(ulog.Loggable):
                        os.path.isfile(os.path.join(self.path_data_dir, f)) and os.path.join(self.path_data_dir, f).endswith('.nc')]
         all_indices_fullname = [os.path.join(self.path_data_dir, index) for index in all_indices]
         data_generator = DataGenerator(all_indices_fullname, **self.params)
+        data_generator.get_labels(all_indices_fullname, self.dataset_comparison_path, self.classes)
         predictions = self.model.predict(data_generator)
         y_pred = np.argmax(predictions, axis=3)
         for i, prediction in enumerate(predictions):
@@ -893,6 +894,37 @@ class CMFit(ulog.Loggable):
                               "Confusion matrix " + self.label_set + " for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True, smaller=True)
         plt.savefig(os.path.join(self.plots_path, 'confusion_matrix_' + self.label_set + '.png'))
+        plt.close()
+
+        sen2cor = data_generator.get_sen2cor(self.dataset_comparison_path)
+
+        f1_kmask = np.round(self.set_batches_f1(classes, sen2cor, 1), 2)
+        y_sen2cor = np.argmax(sen2cor, axis=3)
+        y_sen2cor_fl = y_sen2cor.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        print("Unique Sen2Cor ", np.unique(y_sen2cor_fl), "Original ", unique_true)
+        print("F1 Sen2Cor ", f1_kmask)
+        f1_dic, precision, recall = {}, {}, {}
+        for i, label in enumerate(unique_true):
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
+            f1_dic[label] = f1_curr
+            precision[label] = prec_curr
+            recall[label] = rec_curr
+        print("Sen2Cor ", f1_dic)
+        print("precision ", precision, " recall ", recall)
+        file.write("Sen2Cor F1: " + str(f1_dic) + " for " + self.label_set + "\n")
+        file.write("Sen2Cor Precision: " + str(precision) + "\n")
+        file.write("Sen2Cor Recall: " + str(recall) + "\n")
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl, self.classes)
+        print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
+        print(cm_normalize)
+        plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
+                              "Confusion matrix " + self.label_set + " for Sen2Cor, dice score: " + str(f1_kmask),
+                              normalized=True, smaller=True)
+        plt.savefig(os.path.join(self.plots_path, 'Sen2Cor_confusion_matrix_' + self.label_set + '.png'))
         plt.close()
         file.close()
 
