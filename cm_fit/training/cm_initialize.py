@@ -861,7 +861,7 @@ class CMFit(ulog.Loggable):
         predictions = self.model.predict(data_generator)
         y_pred = np.argmax(predictions, axis=3)
         for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(all_indices_fullname, prediction, y_pred[i], self.dataset_comparison_path)
+            self.save_masks_contrast(all_indices_fullname[i], prediction, y_pred[i], self.dataset_comparison_path)
         classes = data_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
 
