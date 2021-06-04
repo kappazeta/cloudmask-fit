@@ -921,7 +921,7 @@ class CMFit(ulog.Loggable):
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl, self.classes)
         print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
         print(cm_normalize)
-        plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
+        plot_confusion_matrix(cm_normalize[1:-1, 1:-1], ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
                               "Confusion matrix " + self.label_set + " for Sen2Cor, dice score: " + str(f1_kmask),
                               normalized=True, smaller=True)
         plt.savefig(os.path.join(self.plots_path, 'Sen2Cor_confusion_matrix_' + self.label_set + '.png'))
