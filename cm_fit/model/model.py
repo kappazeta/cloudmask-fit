@@ -281,7 +281,7 @@ class CMModel(log.Loggable):
         callbacks = []
 
         with tf.name_scope('Callbacks'):
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_custom_f1", mode='max', patience=20)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_custom_f1", mode='max', patience=40)
             callbacks.append(early_stopping)
 
             if self.path_checkpoint != '':
