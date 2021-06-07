@@ -79,6 +79,7 @@ class CMFit(ulog.Loggable):
         self.features = []
         self.label_set = "Label"
         self.normalization = "std"
+        self.product_level = "L2A"
 
         self.learning_rate = 1E-4
         self.batch_size_train = 16
@@ -121,6 +122,9 @@ class CMFit(ulog.Loggable):
         self.dataset_comparison_path = self.experiment_res_folder + "/cmix_comparison"
         if not os.path.isabs(self.path_data_dir):
             self.path_data_dir = os.path.abspath(self.path_data_dir)
+
+        if "product_level" in d["input"]:
+            self.product_level = d["input"]["product_level"]
 
         self.split_ratio_test = d["split"]["ratio"]["test"]
         self.split_ratio_val = d["split"]["ratio"]["val"]
@@ -394,6 +398,7 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -444,7 +449,7 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
-        self.params["test_mode"] = False
+        self.params["product_level"] = self.product_level
 
         if self.png_iterator:
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
@@ -518,6 +523,7 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         # Read splits again
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
@@ -612,6 +618,7 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         tile_paths = []
 
@@ -653,6 +660,7 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
@@ -950,6 +958,7 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         file_specificator = product_name.rsplit('.', 1)[0]
         date_match = file_specificator.rsplit('_', 1)[-1]
@@ -976,6 +985,7 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
@@ -1004,6 +1014,7 @@ class CMFit(ulog.Loggable):
         self.params["batch_size"] = self.batch_size_train
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         path_splits = os.path.abspath(self.meta_data_path + "/splits.json")
         with open(path_splits, "r") as fo:
