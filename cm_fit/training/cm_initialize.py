@@ -430,7 +430,7 @@ class CMFit(ulog.Loggable):
         if not self.png_iterator:
             train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
                                                                              6)
-            print(train_std, train_means, train_min, train_max)
+            self.log.info(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
         model_name = trainer_name+"-{}".format(int(time.time()))
@@ -462,7 +462,7 @@ class CMFit(ulog.Loggable):
         if not self.png_iterator:
             train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
                                                                              6)
-            print(train_std, train_means, train_min, train_max)
+            self.log.info(train_std, train_means, train_min, train_max)
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
         self.get_model_by_name(self.model_arch)
@@ -552,8 +552,7 @@ class CMFit(ulog.Loggable):
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
-        print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        self.log.info(cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Confusion matrix for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True)
@@ -571,8 +570,7 @@ class CMFit(ulog.Loggable):
         unique_true = np.unique(y_true_fl)
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
                                                                                     self.classes)
-        print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        self.log.info(cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes,
                               "Confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
                               normalized=True)
@@ -679,8 +677,8 @@ class CMFit(ulog.Loggable):
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique KappaMask ", np.unique(y_pred_fl), "Original ", unique_true)
-        print("F1 KappaMask ", f1_kmask)
+        self.log.info("Unique KappaMask ", np.unique(y_pred_fl), "Original ", unique_true)
+        self.log.info("F1 KappaMask ", f1_kmask)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
@@ -689,15 +687,14 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("Kappa ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("Kappa ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file = open(self.plots_path + "/test_f1_scores.txt", "w")
         file.write("KappaMask F1: " + str(f1_dic) + "\n")
         file.write("KappaMask Precision: " + str(precision) + "\n")
         file.write("KappaMask Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
-        print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        self.log.info(cm_normalize)
         plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
                               "Test confusion matrix for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True, smaller=True)
@@ -720,8 +717,8 @@ class CMFit(ulog.Loggable):
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique Sen2Cor ", np.unique(y_sen2cor_fl))
-        print("F1 Sen2Cor ", f1_sen2cor)
+        self.log.info("Unique Sen2Cor ", np.unique(y_sen2cor_fl))
+        self.log.info("F1 Sen2Cor ", f1_sen2cor)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
@@ -730,15 +727,14 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("Sen2Cor ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("Sen2Cor ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file.write("Sen2Cor F1: " + str(f1_dic) + "\n")
         file.write("Sen2Cor Precision: " + str(precision) + "\n")
         file.write("Sen2Cor Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
                                                                                     self.classes)
-        print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
-        print("Sen2Cor", cm_normalize)
+        self.log.info("Sen2Cor", cm_normalize)
         plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
                               "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
                               normalized=True, smaller=True)
@@ -751,8 +747,8 @@ class CMFit(ulog.Loggable):
         y_fmask_fl = y_fmask.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique Fmask ", np.unique(y_fmask_fl))
-        print("F1 Fmask ", f1_fmask)
+        self.log.info("Unique Fmask ", np.unique(y_fmask_fl))
+        self.log.info("F1 Fmask ", f1_fmask)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
@@ -761,15 +757,14 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("Fmask ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("Fmask ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file.write("Fmask F1: " + str(f1_dic) + "\n")
         file.write("Fmask Precision: " + str(precision) + "\n")
         file.write("Fmask Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
                                                                                     self.classes)
-        print(confusion_matrix(y_true_fl, y_fmask_fl, unique_true, normalize='true'))
-        print("Fmask ", cm_normalize)
+        self.log.info("Fmask ", cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes[1:-1],
                               "Test confusion matrix for Fmask, dice score: " + str(f1_fmask),
                               normalized=True, smaller=True)
@@ -782,8 +777,8 @@ class CMFit(ulog.Loggable):
         y_s2cloudless_fl = y_s2cloudless.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique s2cloudless ", np.unique(y_s2cloudless_fl))
-        print("F1 s2cloudless ", f1_s2cloudless)
+        self.log.info("Unique s2cloudless ", np.unique(y_s2cloudless_fl))
+        self.log.info("F1 s2cloudless ", f1_s2cloudless)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
@@ -792,15 +787,14 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("S2cloudless ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("S2cloudless ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file.write("S2cloudless F1: " + str(f1_dic) + "\n")
         file.write("S2cloudless Precision: " + str(precision) + "\n")
         file.write("S2cloudless Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
                                                                                     self.classes)
-        print(confusion_matrix(y_true_fl, y_s2cloudless_fl, unique_true, normalize='true'))
-        print("s2cloudless ", cm_normalize)
+        self.log.info("s2cloudless ", cm_normalize)
         plot_confusion_matrix(cm_normalize, self.classes[1:-1],
                               "Test confusion matrix for S2cloudless, dice score: " + str(f1_s2cloudless),
                               normalized=True, smaller=True)
@@ -813,8 +807,8 @@ class CMFit(ulog.Loggable):
         y_maja_fl = y_maja.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique maja ", np.unique(y_maja_fl))
-        print("F1 maja ", f1_maja)
+        self.log.info("Unique maja ", np.unique(y_maja_fl))
+        self.log.info("F1 maja ", f1_maja)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
@@ -823,15 +817,14 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("Maja ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("Maja ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file.write("Maja F1: " + str(f1_dic) + "\n")
         file.write("Maja Precision: " + str(precision) + "\n")
         file.write("Maja Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
                                                                                     self.classes)
-        print(confusion_matrix(y_true_fl, y_maja_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        self.log.info(cm_normalize)
         plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
                               "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
                               normalized=True, smaller=True)
@@ -879,8 +872,8 @@ class CMFit(ulog.Loggable):
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique KappaMask ", np.unique(y_pred_fl), "Original ", unique_true)
-        print("F1 KappaMask ", f1_kmask)
+        self.log.info("Unique KappaMask ", np.unique(y_pred_fl), "Original ", unique_true)
+        self.log.info("F1 KappaMask ", f1_kmask)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
@@ -889,15 +882,14 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("Kappa ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("Kappa ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file = open(self.plots_path + "/dataset_comparison.txt", "w")
         file.write("KappaMask F1: " + str(f1_dic) + " for " + self.label_set + "\n")
         file.write("KappaMask Precision: " + str(precision) + "\n")
         file.write("KappaMask Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
-        print(confusion_matrix(y_true_fl, y_pred_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        self.log.info(cm_normalize)
         plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
                               "Confusion matrix " + self.label_set + " for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True, smaller=True)
@@ -911,8 +903,8 @@ class CMFit(ulog.Loggable):
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        print("Unique Sen2Cor ", np.unique(y_sen2cor_fl), "Original ", unique_true)
-        print("F1 Sen2Cor ", f1_kmask)
+        self.log.info("Unique Sen2Cor ", np.unique(y_sen2cor_fl), "Original ", unique_true)
+        self.log.info("F1 Sen2Cor ", f1_kmask)
         f1_dic, precision, recall = {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
@@ -921,14 +913,13 @@ class CMFit(ulog.Loggable):
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
-        print("Sen2Cor ", f1_dic)
-        print("precision ", precision, " recall ", recall)
+        self.log.info("Sen2Cor ", f1_dic)
+        self.log.info("precision ", precision, " recall ", recall)
         file.write("Sen2Cor F1: " + str(f1_dic) + " for " + self.label_set + "\n")
         file.write("Sen2Cor Precision: " + str(precision) + "\n")
         file.write("Sen2Cor Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl, self.classes)
-        print(confusion_matrix(y_true_fl, y_sen2cor_fl, unique_true, normalize='true'))
-        print(cm_normalize)
+        self.log.info(cm_normalize)
         plot_confusion_matrix(cm_normalize[1:-1, 1:-1], ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
                               "Confusion matrix " + self.label_set + " for Sen2Cor, dice score: " + str(f1_kmask),
                               normalized=True, smaller=True)
@@ -996,8 +987,8 @@ class CMFit(ulog.Loggable):
         #test_generator = DataGenerator(dictionary['test'], **self.params)
         train_std, train_means, train_min, train_max = set_normalization(training_generator, dictionary['train'], 5)
         self.to_txt_normalization(train_std, train_means, train_min, train_max)
-        print("Stats")
-        print(train_std, train_means, train_min, train_max)
+        self.log.info("Stats")
+        self.log.info(train_std, train_means, train_min, train_max)
         tr_overall_stat, tr_per_image_stat = training_generator.get_label_stat(dictionary['train'], self.classes)
         self.to_txt_class_weights(tr_overall_stat)
         #val_overall_stat, val_per_image_stat = validation_generator.get_label_stat(dictionary['val'], self.classes)
