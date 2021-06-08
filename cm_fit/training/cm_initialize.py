@@ -17,8 +17,8 @@ from cm_fit.util.json_codec import CMFJSONEncoder
 from cm_fit.util import log as ulog
 from cm_fit.model.architectures import ARCH_MAP
 from cm_fit.data_loader.data_generator import DataGenerator
-from cm_fit.data_loader.utils import generate_splits
-from cm_fit.training.utils import set_normalization
+from cm_fit.data_loader.data_utils import generate_splits
+from cm_fit.training.train_utils import set_normalization
 from cm_fit.plot.train_history import draw_history_plots
 from tensorflow.keras.utils import Sequence
 from keras.callbacks import ModelCheckpoint

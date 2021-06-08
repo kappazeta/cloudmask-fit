@@ -8,7 +8,7 @@ from keras.utils import np_utils
 from PIL import Image
 import tensorflow as tf
 from tensorflow.python.keras.utils.data_utils import Sequence
-from cm_fit.data_loader.utils import string_to_list
+from cm_fit.data_loader.data_utils import string_to_list
 
 
 class DataGenerator(Sequence):
