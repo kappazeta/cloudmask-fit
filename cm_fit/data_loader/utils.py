@@ -35,3 +35,11 @@ def generate_splits(path_input, val_ratio, test_products):
     }
 
     return dictionary_out
+
+
+def string_to_list(input_line):
+    output_line = input_line.split(" [")[-1]
+    output_line = output_line.replace("]", "")
+    output_line = output_line.split(", ")
+    output_line = [int(item) for item in output_line]
+    return output_line

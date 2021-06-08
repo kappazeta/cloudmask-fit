@@ -404,9 +404,11 @@ class CMFit(ulog.Loggable):
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
             training_generator = DataGenerator(self.splits['train'], **self.params, png_form=True)
             validation_generator = DataGenerator(self.splits['val'], **self.params, png_form=True)
+            validation_generator.set_normalization_file(self.meta_data_path)
         else:
             training_generator = DataGenerator(self.splits['train'], **self.params)
             validation_generator = DataGenerator(self.splits['val'], **self.params)
+            validation_generator.set_normalization_file(self.meta_data_path)
 
         self.get_model_by_name(self.model_arch)
         # Propagate configuration parameters.
@@ -455,9 +457,11 @@ class CMFit(ulog.Loggable):
             self.features = ["TCI_R", "TCI_G", "TCI_B"]
             training_generator = DataGenerator(self.splits['train'], **self.params, png_form=True)
             validation_generator = DataGenerator(self.splits['val'], **self.params, png_form=True)
+            validation_generator.set_normalization_file(self.meta_data_path)
         else:
             training_generator = DataGenerator(self.splits['train'], **self.params)
             validation_generator = DataGenerator(self.splits['val'], **self.params)
+            validation_generator.set_normalization_file(self.meta_data_path)
 
         if not self.png_iterator:
             train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
@@ -531,6 +535,7 @@ class CMFit(ulog.Loggable):
             dictionary = json.load(fo)
 
         valid_generator = DataGenerator(dictionary['val'], **self.params)
+        valid_generator.set_normalization_file(self.meta_data_path)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
         # val_std, val_means, val_min, val_max = set_normalization(valid_generator, dictionary['val'], 1)
         # valid_generator.store_orig(dictionary['val'], self.prediction_path)
@@ -623,6 +628,7 @@ class CMFit(ulog.Loggable):
         for subfolder in os.listdir(datadir):
             tile_paths.append(os.path.join(datadir, subfolder))
         test_generator = DataGenerator(tile_paths, **self.params)
+        test_generator.set_normalization_file(self.meta_data_path)
         #test_std, test_means, test_min, test_max = set_normalization(test_generator, tile_paths, 1)
         # test_generator.get_labels(tile_paths, self.prediction_path, self.validation_path, self.classes)
         test_generator.store_orig(tile_paths, self.validation_path)
@@ -665,6 +671,7 @@ class CMFit(ulog.Loggable):
             dictionary = json.load(fo)
 
         test_generator = DataGenerator(dictionary['test'], **self.params)
+        test_generator.set_normalization_file(self.meta_data_path)
         test_generator.get_labels(dictionary['test'], self.test_path, self.classes)
 
         predictions = self.model.predict(test_generator)
@@ -859,6 +866,7 @@ class CMFit(ulog.Loggable):
                        os.path.isfile(os.path.join(self.path_data_dir, f)) and os.path.join(self.path_data_dir, f).endswith('.nc')]
         all_indices_fullname = [os.path.join(self.path_data_dir, index) for index in all_indices]
         data_generator = DataGenerator(all_indices_fullname, **self.params)
+        data_generator.set_normalization_file(self.meta_data_path)
         data_generator.get_labels(all_indices_fullname, self.dataset_comparison_path, self.classes)
         predictions = self.model.predict(data_generator)
         y_pred = np.argmax(predictions, axis=3)

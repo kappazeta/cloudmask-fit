@@ -8,6 +8,7 @@ from keras.utils import np_utils
 from PIL import Image
 import tensorflow as tf
 from tensorflow.python.keras.utils.data_utils import Sequence
+from cm_fit.data_loader.utils import string_to_list
 
 
 class DataGenerator(Sequence):
@@ -68,6 +69,16 @@ class DataGenerator(Sequence):
 
     def set_max(self, max_v):
         self.max_v = max_v
+
+    def set_normalization_file(self, meta_data_path):
+        """ Read file with std, mean, min and max values and overwrite coefficients """
+        if os.path.isfile(os.path.join(meta_data_path, "normalization.txt")):
+            with open(os.path.join(meta_data_path, "normalization.txt")) as file:
+                all_lines = file.readlines()
+                self.stds = string_to_list(all_lines[0])
+                self.means = string_to_list(all_lines[1])
+                self.min_v = string_to_list(all_lines[2])
+                self.max_v = string_to_list(all_lines[3])
 
     def on_epoch_end(self):
         """Updates indexes after each epoch"""
