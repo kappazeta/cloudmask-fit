@@ -420,7 +420,7 @@ class CMFit(ulog.Loggable):
         self.model.set_learning_rate(self.learning_rate)
 
         # Construct and compile the model.
-        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), layers=5, units=64,
+        self.model.construct(self.dim[0], self.dim[1], len(self.features), len(self.classes), layers=5, units=128,
                              pretrained_weights=pretrained_weights)
         self.model.model.summary()
         self.model.compile(self.loss_name)
@@ -432,7 +432,7 @@ class CMFit(ulog.Loggable):
         if not self.png_iterator:
             train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
                                                                              6)
-            self.log.info(train_std, train_means, train_min, train_max)
+            self.log.info("{} {} {} {}".format(train_std, train_means, train_min, train_max))
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
         model_name = trainer_name+"-{}".format(int(time.time()))
@@ -466,7 +466,7 @@ class CMFit(ulog.Loggable):
         if not self.png_iterator:
             train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
                                                                              6)
-            self.log.info(train_std, train_means, train_min, train_max)
+            self.log.info("{} {} {} {}".format(train_std, train_means, train_min, train_max))
             self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
         self.get_model_by_name(self.model_arch)
@@ -702,7 +702,7 @@ class CMFit(ulog.Loggable):
         file.write("KappaMask Recall: " + str(recall) + "\n")
         cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
         self.log.info(cm_normalize)
-        plot_confusion_matrix(cm_normalize[1:-1, 1:-1], ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
+        plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
                               "Test confusion matrix for KappaMask, dice score: " + str(f1_kmask),
                               normalized=True, smaller=True)
         plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_plot.png'))
