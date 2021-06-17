@@ -861,6 +861,7 @@ class CMFit(ulog.Loggable):
         self.params["shuffle"] = False
         self.params["label_set"] = self.label_set
         self.params["normalization"] = self.normalization
+        self.params["product_level"] = self.product_level
 
         all_indices = [f for f in os.listdir(self.path_data_dir) if
                        os.path.isfile(os.path.join(self.path_data_dir, f)) and os.path.join(self.path_data_dir, f).endswith('.nc')]
