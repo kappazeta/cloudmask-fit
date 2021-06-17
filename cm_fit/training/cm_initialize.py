@@ -876,7 +876,7 @@ class CMFit(ulog.Loggable):
         classes = data_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
 
-        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 1), 2)
+        f1_kmask = np.round(self.set_batches_f1(classes, predictions, 50), 2)
 
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
@@ -907,7 +907,7 @@ class CMFit(ulog.Loggable):
 
         sen2cor = data_generator.get_sen2cor(self.dataset_comparison_path)
 
-        f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 1), 2)
+        f1_sen2cor = np.round(self.set_batches_f1(classes, sen2cor, 50), 2)
         y_sen2cor = np.argmax(sen2cor, axis=3)
         y_sen2cor_fl = y_sen2cor.flatten()
         y_true_fl = y_true.flatten()
