@@ -407,6 +407,10 @@ class CMFit(ulog.Loggable):
             validation_generator.set_normalization_file(self.meta_data_path)
         else:
             training_generator = DataGenerator(self.splits['train'], **self.params)
+            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
+                                                                             6)
+            self.log.info("{} {} {} {}".format(train_std, train_means, train_min, train_max))
+            self.to_txt_normalization(train_std, train_means, train_min, train_max)
             validation_generator = DataGenerator(self.splits['val'], **self.params)
             validation_generator.set_normalization_file(self.meta_data_path)
 
@@ -428,12 +432,6 @@ class CMFit(ulog.Loggable):
         size = self.get_model_memory_usage(self.batch_size_train, self.model.model)
 
         self.model.set_num_samples(len(self.splits['train']), len(self.splits['val']))
-
-        if not self.png_iterator:
-            train_std, train_means, train_min, train_max = set_normalization(training_generator, self.splits['train'],
-                                                                             6)
-            self.log.info("{} {} {} {}".format(train_std, train_means, train_min, train_max))
-            self.to_txt_normalization(train_std, train_means, train_min, train_max)
 
         model_name = trainer_name+"-{}".format(int(time.time()))
 
