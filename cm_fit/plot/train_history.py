@@ -88,24 +88,27 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     fmt = '.2f' if normalized else 'd'
     thresh = cm_smaller.max() / 2.
     for i in range(cm_smaller.shape[0]):
-        for j in range(cm_smaller.shape[1]):
-            ax.text(j, i, format(cm_smaller[i, j], fmt),
+        sum_row = 0
+        diagonal = False
+        for k in range(cm_smaller.shape[1]):
+            sum_row += round(cm_smaller[i, k], 2)
+        if sum_row < 1:
+            diagonal = True
+            ax.text(i, i, str(round(cm_smaller[i, i]+0.01, 2)),
                     ha="center", va="center",
-                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
+                    color="white" if cm_smaller[i, i] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
                     )
+        for j in range(cm_smaller.shape[1]):
+            if not diagonal:
+                ax.text(j, i, str(round(cm_smaller[i, j], 2)),
+                        ha="center", va="center",
+                        color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
+                        )
             if round(cm_smaller[i, j], 2) < 0.01:
                 ax.text(j, i, 0,
                         ha="center", va="center",
                         color="black", fontsize=56
                         )
-        sum_row = 0
-        for k in range(cm_smaller.shape[1]):
-            sum_row += round(cm_smaller[i, k], 2)
-        if sum_row < 1:
-            ax.text(i, i, format(cm_smaller[i, i]+0.01, fmt),
-                    ha="center", va="center",
-                    color="white" if cm_smaller[i, i] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
-                    )
     fig.tight_layout()
     return ax
 
