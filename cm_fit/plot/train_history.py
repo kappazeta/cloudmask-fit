@@ -96,7 +96,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
             diagonal = True
             ax.text(i, i, str(round(cm_smaller[i, i]+0.01, 2)),
                     ha="center", va="center",
-                    color="white" if cm_smaller[i, i] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
+                    color="white" if cm_smaller[i, i] > thresh or cm_smaller[i, i] < 0.01 else "black", fontsize=56
                     )
         for j in range(cm_smaller.shape[1]):
             if not diagonal:
