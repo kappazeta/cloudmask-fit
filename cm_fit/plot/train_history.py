@@ -99,7 +99,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
                         color="black", fontsize=56
                         )
         sum_row = 0
-        sum_row = [sum_row + round(cm_smaller[i, k], 2) for k in cm_smaller.shape[1]]
+        sum_row = [sum_row + round(cm_smaller[i, k], 2) for k in range(cm_smaller.shape[1])]
         if sum_row < 1:
             ax.text(i, i, format(cm_smaller[i, i]+0.01, fmt),
                     ha="center", va="center",
