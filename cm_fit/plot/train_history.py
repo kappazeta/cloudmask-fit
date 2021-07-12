@@ -93,6 +93,18 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
                     ha="center", va="center",
                     color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
                     )
+            if round(cm_smaller[i, j], 2) < 0.01:
+                ax.text(j, i, 0,
+                        ha="center", va="center",
+                        color="black", fontsize=56
+                        )
+        sum_row = 0
+        sum_row = [sum_row + round(cm_smaller[i, k], 2) for k in cm_smaller.shape[1]]
+        if sum_row < 1:
+            ax.text(i, i, format(cm_smaller[i, i]+0.01, fmt),
+                    ha="center", va="center",
+                    color="white" if cm_smaller[i, i] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
+                    )
     fig.tight_layout()
     return ax
 
