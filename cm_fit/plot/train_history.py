@@ -91,20 +91,20 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
         sum_row = 0
         diagonal = False
         for k in range(cm_smaller.shape[1]):
-            sum_row += round(cm_smaller[i, k], 2)
+            sum_row += float(format(cm_smaller[i, k], fmt))
         if sum_row < 1:
             diagonal = True
-            ax.text(i, i, str(round(cm_smaller[i, i]+0.01, 2)),
+            ax.text(i, i, format(cm_smaller[i, i]+0.01, fmt),
                     ha="center", va="center",
                     color="white" if cm_smaller[i, i]+0.01 > thresh or cm_smaller[i, i] < 0.01 else "black", fontsize=56
                     )
         for j in range(cm_smaller.shape[1]):
             if not diagonal or i != j:
-                ax.text(j, i, str(round(cm_smaller[i, j], 2)),
+                ax.text(j, i, format(cm_smaller[i, j], fmt),
                         ha="center", va="center",
                         color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
                         )
-            if round(cm_smaller[i, j], 2) < 0.01:
+            if float(format(cm_smaller[i, j], fmt)) < 0.01:
                 ax.text(j, i, 0,
                         ha="center", va="center",
                         color="black", fontsize=56
