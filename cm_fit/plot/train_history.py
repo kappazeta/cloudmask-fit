@@ -106,7 +106,7 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
                         )"""
             ax.text(j, i, format(cm_smaller[i, j], fmt),
                     ha="center", va="center",
-                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.02 else "black", fontsize=56
+                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] <= 0.01 else "black", fontsize=56
                     )
             if float(format(cm_smaller[i, j], fmt)) < 0.01:
                 ax.text(j, i, 0,
