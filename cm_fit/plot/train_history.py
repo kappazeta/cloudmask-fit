@@ -85,28 +85,13 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     plt.setp(ax.get_yticklabels(), fontsize=36)
 
     # Loop over data dimensions and create text annotations.
-    fmt = '.2f' if normalized else 'd'
+    fmt = '.3f' if normalized else 'd'
     thresh = cm_smaller.max() / 2.
     for i in range(cm_smaller.shape[0]):
-        sum_row = 0
-        diagonal = False
-        """for k in range(cm_smaller.shape[1]):
-            sum_row += float(format(cm_smaller[i, k], fmt))
-        if sum_row < 1:
-            diagonal = True
-            ax.text(i, i, format(cm_smaller[i, i]+0.01, fmt),
-                    ha="center", va="center",
-                    color="white" if cm_smaller[i, i]+0.01 > thresh or cm_smaller[i, i] < 0.01 else "black", fontsize=56
-                    )"""
         for j in range(cm_smaller.shape[1]):
-            """if not diagonal or i != j:
-                ax.text(j, i, format(cm_smaller[i, j], fmt),
-                        ha="center", va="center",
-                        color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
-                        )"""
             ax.text(j, i, format(cm_smaller[i, j], fmt),
                     ha="center", va="center",
-                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] <= 0.01 else "black", fontsize=56
+                    color="white" if cm_smaller[i, j] > thresh else "black", fontsize=56
                     )
             if float(format(cm_smaller[i, j], fmt)) < 0.01:
                 ax.text(j, i, 0,
