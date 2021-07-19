@@ -58,10 +58,10 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     Based on https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
     if smaller:
-        cm_smaller = cm[0:4, 0:4]
+        cm_smaller = cm[0:4, 0:4].copy()
         class_list = class_list[0:4]
     else:
-        cm_smaller = cm
+        cm_smaller = cm.copy()
 
     fig, ax = plt.subplots(figsize=(24, 24))
     im = ax.imshow(cm_smaller, interpolation='nearest', cmap=cmap)
@@ -90,20 +90,24 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     for i in range(cm_smaller.shape[0]):
         sum_row = 0
         diagonal = False
-        for k in range(cm_smaller.shape[1]):
+        """for k in range(cm_smaller.shape[1]):
             sum_row += float(format(cm_smaller[i, k], fmt))
         if sum_row < 1:
             diagonal = True
             ax.text(i, i, format(cm_smaller[i, i]+0.01, fmt),
                     ha="center", va="center",
                     color="white" if cm_smaller[i, i]+0.01 > thresh or cm_smaller[i, i] < 0.01 else "black", fontsize=56
-                    )
+                    )"""
         for j in range(cm_smaller.shape[1]):
-            if not diagonal or i != j:
+            """if not diagonal or i != j:
                 ax.text(j, i, format(cm_smaller[i, j], fmt),
                         ha="center", va="center",
                         color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.01 else "black", fontsize=56
-                        )
+                        )"""
+            ax.text(j, i, format(cm_smaller[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm_smaller[i, j] > thresh or cm_smaller[i, j] < 0.02 else "black", fontsize=56
+                    )
             if float(format(cm_smaller[i, j], fmt)) < 0.01:
                 ax.text(j, i, 0,
                         ha="center", va="center",
