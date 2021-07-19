@@ -89,15 +89,10 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     thresh = cm_smaller.max() / 2.
     for i in range(cm_smaller.shape[0]):
         for j in range(cm_smaller.shape[1]):
-            ax.text(j, i, format(cm_smaller[i, j], fmt),
+            ax.text(j, i, str(round(cm_smaller[i, j], 2)),
                     ha="center", va="center",
                     color="white" if cm_smaller[i, j] > thresh else "black", fontsize=56
                     )
-            if float(format(cm_smaller[i, j], fmt)) < 0.01:
-                ax.text(j, i, 0,
-                        ha="center", va="center",
-                        color="black", fontsize=56
-                        )
     fig.tight_layout()
     return ax
 
