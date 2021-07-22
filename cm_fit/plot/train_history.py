@@ -85,11 +85,11 @@ def plot_confusion_matrix(cm, class_list, title, normalized=False, cmap=plt.cm.B
     plt.setp(ax.get_yticklabels(), fontsize=36)
 
     # Loop over data dimensions and create text annotations.
-    fmt = '.3f' if normalized else 'd'
+    fmt = '.2f' if normalized else 'd'
     thresh = cm_smaller.max() / 2.
     for i in range(cm_smaller.shape[0]):
         for j in range(cm_smaller.shape[1]):
-            ax.text(j, i, str(round(cm_smaller[i, j], 2)),
+            ax.text(j, i, format(cm_smaller[i, j], fmt),
                     ha="center", va="center",
                     color="white" if cm_smaller[i, j] > thresh else "black", fontsize=56
                     )
