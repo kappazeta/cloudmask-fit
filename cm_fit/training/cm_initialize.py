@@ -868,6 +868,10 @@ class CMFit(ulog.Loggable):
         data_generator.set_normalization_file(self.meta_data_path)
         data_generator.get_labels(all_indices_fullname, self.dataset_comparison_path, self.classes)
         predictions = self.model.predict(data_generator)
+        semi_tr_not_available = True
+        if semi_tr_not_available:
+            predictions[:,:,:,4] = np.where(predictions[:,:,:,3]>=predictions[:,:,:,4], predictions[:,:,:,3], predictions[:,:,:,4])
+            predictions[:, :, :, 3] = 0
         y_pred = np.argmax(predictions, axis=3)
         for i, prediction in enumerate(predictions):
             self.save_masks_contrast(all_indices_fullname[i], prediction, y_pred[i], self.dataset_comparison_path)
