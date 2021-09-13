@@ -353,14 +353,15 @@ class CMFit(ulog.Loggable):
         average_recall = recall / iteration
         return average_recall
 
-    def set_batches_accuracy(self, true, predictions, batches):
+    def set_batches_accuracy(self, true, predictions, batches, file):
         samples = len(true) // batches
         acc = 0
         iteration = 0
         for i in range(batches):
-            metric = tf.keras.metrics.CategoricalAccuracy()
+            metric = tf.keras.metrics.Accuracy()
             metric.update_state(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
             acc += metric.result().numpy()
+            file.write("Iteration: " + str(iteration) + "Accuracy: " + str(acc) + "\n")
             iteration += 1
         average_accuracy = acc / iteration
         return average_accuracy
@@ -700,19 +701,21 @@ class CMFit(ulog.Loggable):
         self.log.info("Length {}, {}, {}".format(len(dictionary['test']), len(predictions), len(classes)))
         self.log.info("Unique KappaMask {} and unique original {}".format(np.unique(y_pred_fl), unique_true))
         self.log.info("F1 KappaMask {}".format(f1_kmask))
+        file_acc = open(self.plots_path + "/accuracies.txt", "w")
         f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
-            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], predictions[:, :, :, label], 1, file_acc), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
             accuracies[label] = acc_curr
             self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
+        file_acc.close()
         self.log.info("Kappa {}".format(f1_dic))
-        self.log.info("precision {} and recall {}".format(precision, recall))
+        self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
         file = open(self.plots_path + "/test_f1_scores.txt", "w")
         file.write("KappaMask F1: " + str(f1_dic) + "\n")
         file.write("KappaMask Precision: " + str(precision) + "\n")
@@ -745,18 +748,21 @@ class CMFit(ulog.Loggable):
         unique_true = np.unique(y_true_fl)
         self.log.info("Unique Sen2Cor {}".format(np.unique(y_sen2cor_fl)))
         self.log.info("F1 Sen2Cor {}".format(f1_sen2cor))
+        file_acc = open(self.plots_path + "/accuracies_sen2cor.txt", "w")
         f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
-            acc_cur = np.round(self.set_batches_accuracy(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
+            acc_cur = np.round(self.set_batches_accuracy(classes[:, :, :, label], sen2cor[:, :, :, label], 1, file_acc), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
             accuracies[label] = acc_cur
+            self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
         self.log.info("Sen2Cor {}".format(f1_dic))
-        self.log.info("precision {} and recall {}".format(precision, recall))
+        file_acc.close()
+        self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
         file.write("Sen2Cor F1: " + str(f1_dic) + "\n")
         file.write("Sen2Cor Precision: " + str(precision) + "\n")
         file.write("Sen2Cor Recall: " + str(recall) + "\n")
@@ -778,6 +784,7 @@ class CMFit(ulog.Loggable):
         y_fmask_fl = y_fmask.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        file_acc = open(self.plots_path + "/accuracies_fmask.txt", "w")
         self.log.info("Unique Fmask {}".format(np.unique(y_fmask_fl)))
         self.log.info("F1 Fmask {}".format(f1_fmask))
         f1_dic, precision, recall, accuracies = {}, {}, {}, {}
@@ -785,13 +792,15 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
-            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], fmask[:, :, :, label], 1, file_acc), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
             accuracies[label] = acc_curr
+            self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
         self.log.info("Fmask {}".format(f1_dic))
-        self.log.info("precision {} and recall {}".format(precision, recall))
+        file_acc.close()
+        self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
         file.write("Fmask F1: " + str(f1_dic) + "\n")
         file.write("Fmask Precision: " + str(precision) + "\n")
         file.write("Fmask Recall: " + str(recall) + "\n")
@@ -812,6 +821,7 @@ class CMFit(ulog.Loggable):
         y_s2cloudless_fl = y_s2cloudless.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        file_acc = open(self.plots_path + "/accuracies_s2cloudless.txt", "w")
         self.log.info("Unique s2cloudless {}".format(np.unique(y_s2cloudless_fl)))
         self.log.info("F1 s2cloudless {}".format(f1_s2cloudless))
         f1_dic, precision, recall, accuracies = {}, {}, {}, {}
@@ -819,13 +829,15 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
-            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], s2cloudless[:, :, :, label], 1, file_acc), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
             accuracies[label] = acc_curr
+            self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
         self.log.info("S2cloudless {}".format(f1_dic))
-        self.log.info("precision {} and recall".format(precision, recall))
+        self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
+        file_acc.close()
         file.write("S2cloudless F1: " + str(f1_dic) + "\n")
         file.write("S2cloudless Precision: " + str(precision) + "\n")
         file.write("S2cloudless Recall: " + str(recall) + "\n")
@@ -847,6 +859,7 @@ class CMFit(ulog.Loggable):
         y_maja_fl = y_maja.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        file_acc = open(self.plots_path + "/accuracies_maja.txt", "w")
         self.log.info("Unique maja {}".format(np.unique(y_maja_fl)))
         self.log.info("F1 maja {}".format(f1_maja))
         f1_dic, precision, recall, accuracies = {}, {}, {}, {}
@@ -854,17 +867,20 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
-            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], maja[:, :, :, label], 1, file_acc), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
             accuracies[label] = acc_curr
+            self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
         self.log.info("Maja {}".format(f1_dic))
-        self.log.info("precision {} and recall {}".format(precision, recall))
+        self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
+        file_acc.close()
         file.write("Maja F1: " + str(f1_dic) + "\n")
         file.write("Maja Precision: " + str(precision) + "\n")
         file.write("Maja Recall: " + str(recall) + "\n")
         file.write("Maja Accuracy: " + str(accuracies) + "\n")
+        file.close()
 
         if confusion_matrix_drawing:
             cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
