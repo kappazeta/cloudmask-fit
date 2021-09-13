@@ -358,9 +358,8 @@ class CMFit(ulog.Loggable):
         acc = 0
         iteration = 0
         for i in range(batches):
-            metric = tf.keras.metrics.Accuracy()
-            metric.update_state(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
-            acc += metric.result().numpy()
+            curr_acc = self.model.recall_m(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
+            acc += curr_acc
             file.write("Iteration: " + str(iteration) + "Accuracy: " + str(acc) + "\n")
             iteration += 1
         average_accuracy = acc / iteration

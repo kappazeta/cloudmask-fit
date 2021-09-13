@@ -187,6 +187,16 @@ class CMModel(log.Loggable):
         return recall
 
     @staticmethod
+    def accuracy_m(y_true, y_pred):
+        TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        TN = K.sum(K.round(K.clip((1-y_true) * (1-y_pred), 0, 1)))
+        FP = K.sum(K.round(K.clip((1-y_true) * y_pred, 0, 1)))
+        FN = K.sum(K.round(K.clip(y_true * (1-y_pred), 0, 1)))
+
+        accuracy = (TP + TN) / (TP + TN + FP + FN + K.epsilon())
+        return accuracy
+
+    @staticmethod
     def dice_loss(y_true, y_pred):
         def dice_coef(y_true, y_pred, smooth=1):
             """
