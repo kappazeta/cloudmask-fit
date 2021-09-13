@@ -333,25 +333,37 @@ class CMFit(ulog.Loggable):
 
     def set_batches_precision(self, true, predictions, batches):
         samples = len(true) // batches
-        f1 = 0
+        precision = 0
         iteration = 0
         for i in range(batches):
-            curr_f1 = self.model.precision_m(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
-            f1 += curr_f1
+            curr_precision = self.model.precision_m(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
+            precision += curr_precision
             iteration += 1
-        average_precision = f1 / iteration
+        average_precision = precision / iteration
         return average_precision
 
     def set_batches_recall(self, true, predictions, batches):
         samples = len(true) // batches
-        f1 = 0
+        recall = 0
         iteration = 0
         for i in range(batches):
-            curr_f1 = self.model.recall_m(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
-            f1 += curr_f1
+            curr_recall = self.model.recall_m(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
+            recall += curr_recall
             iteration += 1
-        average_recall = f1 / iteration
+        average_recall = recall / iteration
         return average_recall
+
+    def set_batches_accuracy(self, true, predictions, batches):
+        samples = len(true) // batches
+        acc = 0
+        iteration = 0
+        for i in range(batches):
+            metric = tf.keras.metrics.CategoricalAccuracy()
+            metric.update_state(true[i * samples:(i + 1) * samples], predictions[i * samples:(i + 1) * samples])
+            acc += metric.result().numpy()
+            iteration += 1
+        average_accuracy = acc / iteration
+        return average_accuracy
 
     def get_model_memory_usage(self, batch_size, model):
         import numpy as np
@@ -642,6 +654,9 @@ class CMFit(ulog.Loggable):
 
     def test(self, product_name, path_weights):
 
+        # TODO: move it into config
+        confusion_matrix_drawing = False
+
         self.get_model_by_name(self.model_arch)
 
         # Propagate configuration parameters.
@@ -682,32 +697,38 @@ class CMFit(ulog.Loggable):
         y_pred_fl = y_pred.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
+        self.log.info("Length {}, {}, {}".format(len(dictionary['test']), len(predictions), len(classes)))
         self.log.info("Unique KappaMask {} and unique original {}".format(np.unique(y_pred_fl), unique_true))
         self.log.info("F1 KappaMask {}".format(f1_kmask))
-        f1_dic, precision, recall = {}, {}, {}
+        f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], predictions[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
+            accuracies[label] = acc_curr
+            self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
         self.log.info("Kappa {}".format(f1_dic))
         self.log.info("precision {} and recall {}".format(precision, recall))
         file = open(self.plots_path + "/test_f1_scores.txt", "w")
         file.write("KappaMask F1: " + str(f1_dic) + "\n")
         file.write("KappaMask Precision: " + str(precision) + "\n")
         file.write("KappaMask Recall: " + str(recall) + "\n")
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
-        self.log.info(cm_normalize)
-        plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
-                              "Test confusion matrix for KappaMask, dice score: " + str(f1_kmask),
-                              normalized=True, smaller=True)
-        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_plot.png'))
-        plt.close()
+        file.write("KappaMask Accuracy: " + str(accuracies) + "\n")
+        if confusion_matrix_drawing:
+            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_pred_fl, self.classes)
+            self.log.info(cm_normalize)
+            plot_confusion_matrix(cm_normalize, ["CLEAR", "CLOUD_SHADOW", "SEMI_TRANSPARENT_CLOUD", "CLOUD", "MISSING"],
+                                  "Test confusion matrix for KappaMask, dice score: " + str(f1_kmask),
+                                  normalized=True, smaller=True)
+            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_plot.png'))
+            plt.close()
 
-        for i, prediction in enumerate(predictions):
-            self.save_masks_contrast(dictionary['test'][i], prediction, y_pred[i], self.test_path)
+            for i, prediction in enumerate(predictions):
+                self.save_masks_contrast(dictionary['test'][i], prediction, y_pred[i], self.test_path)
 
         """for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
@@ -724,27 +745,32 @@ class CMFit(ulog.Loggable):
         unique_true = np.unique(y_true_fl)
         self.log.info("Unique Sen2Cor {}".format(np.unique(y_sen2cor_fl)))
         self.log.info("F1 Sen2Cor {}".format(f1_sen2cor))
-        f1_dic, precision, recall = {}, {}, {}
+        f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
+            acc_cur = np.round(self.set_batches_accuracy(classes[:, :, :, label], sen2cor[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
+            accuracies[label] = acc_cur
         self.log.info("Sen2Cor {}".format(f1_dic))
         self.log.info("precision {} and recall {}".format(precision, recall))
         file.write("Sen2Cor F1: " + str(f1_dic) + "\n")
         file.write("Sen2Cor Precision: " + str(precision) + "\n")
         file.write("Sen2Cor Recall: " + str(recall) + "\n")
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
-                                                                                    self.classes)
-        self.log.info("Sen2Cor {}".format(cm_normalize))
-        plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
-                              "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
-                              normalized=True, smaller=True)
-        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_sen2cor.png'))
-        plt.close()
+        file.write("Sen2Cor Accuracy: " + str(accuracies) + "\n")
+
+        if confusion_matrix_drawing:
+            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_sen2cor_fl,
+                                                                                        self.classes)
+            self.log.info("Sen2Cor {}".format(cm_normalize))
+            plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
+                                  "Test confusion matrix for sen2cor, dice score: " + str(f1_sen2cor),
+                                  normalized=True, smaller=True)
+            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_sen2cor.png'))
+            plt.close()
 
         fmask = test_generator.get_fmask(self.test_path)
         y_fmask = np.argmax(fmask, axis=3)
@@ -754,27 +780,31 @@ class CMFit(ulog.Loggable):
         unique_true = np.unique(y_true_fl)
         self.log.info("Unique Fmask {}".format(np.unique(y_fmask_fl)))
         self.log.info("F1 Fmask {}".format(f1_fmask))
-        f1_dic, precision, recall = {}, {}, {}
+        f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], fmask[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
+            accuracies[label] = acc_curr
         self.log.info("Fmask {}".format(f1_dic))
         self.log.info("precision {} and recall {}".format(precision, recall))
         file.write("Fmask F1: " + str(f1_dic) + "\n")
         file.write("Fmask Precision: " + str(precision) + "\n")
         file.write("Fmask Recall: " + str(recall) + "\n")
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
-                                                                                    self.classes)
-        self.log.info("Fmask {}".format(cm_normalize))
-        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
-                              "Test confusion matrix for Fmask, dice score: " + str(f1_fmask),
-                              normalized=True, smaller=True)
-        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_fmask.png'))
-        plt.close()
+
+        if confusion_matrix_drawing:
+            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_fmask_fl,
+                                                                                        self.classes)
+            self.log.info("Fmask {}".format(cm_normalize))
+            plot_confusion_matrix(cm_normalize, self.classes[1:-1],
+                                  "Test confusion matrix for Fmask, dice score: " + str(f1_fmask),
+                                  normalized=True, smaller=True)
+            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_fmask.png'))
+            plt.close()
 
         s2cloudless = test_generator.get_s2cloudless(self.test_path)
         y_s2cloudless = np.argmax(s2cloudless, axis=3)
@@ -784,27 +814,32 @@ class CMFit(ulog.Loggable):
         unique_true = np.unique(y_true_fl)
         self.log.info("Unique s2cloudless {}".format(np.unique(y_s2cloudless_fl)))
         self.log.info("F1 s2cloudless {}".format(f1_s2cloudless))
-        f1_dic, precision, recall = {}, {}, {}
+        f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], s2cloudless[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
+            accuracies[label] = acc_curr
         self.log.info("S2cloudless {}".format(f1_dic))
         self.log.info("precision {} and recall".format(precision, recall))
         file.write("S2cloudless F1: " + str(f1_dic) + "\n")
         file.write("S2cloudless Precision: " + str(precision) + "\n")
         file.write("S2cloudless Recall: " + str(recall) + "\n")
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
-                                                                                    self.classes)
-        self.log.info("s2cloudless {}".format(cm_normalize))
-        plot_confusion_matrix(cm_normalize, self.classes[1:-1],
-                              "Test confusion matrix for S2cloudless, dice score: " + str(f1_s2cloudless),
-                              normalized=True, smaller=True)
-        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_s2cloudless.png'))
-        plt.close()
+        file.write("S2cloudless Accuracy: " + str(accuracies) + "\n")
+
+        if confusion_matrix_drawing:
+            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_s2cloudless_fl,
+                                                                                        self.classes)
+            self.log.info("s2cloudless {}".format(cm_normalize))
+            plot_confusion_matrix(cm_normalize, self.classes[1:-1],
+                                  "Test confusion matrix for S2cloudless, dice score: " + str(f1_s2cloudless),
+                                  normalized=True, smaller=True)
+            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_s2cloudless.png'))
+            plt.close()
 
         maja = test_generator.get_maja(self.test_path)
         y_maja = np.argmax(maja, axis=3)
@@ -814,27 +849,32 @@ class CMFit(ulog.Loggable):
         unique_true = np.unique(y_true_fl)
         self.log.info("Unique maja {}".format(np.unique(y_maja_fl)))
         self.log.info("F1 maja {}".format(f1_maja))
-        f1_dic, precision, recall = {}, {}, {}
+        f1_dic, precision, recall, accuracies = {}, {}, {}, {}
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], maja[:, :, :, label], 1), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
+            accuracies[label] = acc_curr
         self.log.info("Maja {}".format(f1_dic))
         self.log.info("precision {} and recall {}".format(precision, recall))
         file.write("Maja F1: " + str(f1_dic) + "\n")
         file.write("Maja Precision: " + str(precision) + "\n")
         file.write("Maja Recall: " + str(recall) + "\n")
-        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
-                                                                                    self.classes)
-        self.log.info(cm_normalize)
-        plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
-                              "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
-                              normalized=True, smaller=True)
-        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
-        plt.close()
+        file.write("Maja Accuracy: " + str(accuracies) + "\n")
+
+        if confusion_matrix_drawing:
+            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
+                                                                                        self.classes)
+            self.log.info(cm_normalize)
+            plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
+                                  "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
+                                  normalized=True, smaller=True)
+            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
+            plt.close()
 
         return
 
