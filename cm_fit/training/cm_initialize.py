@@ -879,7 +879,6 @@ class CMFit(ulog.Loggable):
         file.write("Maja Precision: " + str(precision) + "\n")
         file.write("Maja Recall: " + str(recall) + "\n")
         file.write("Maja Accuracy: " + str(accuracies) + "\n")
-        file.close()
 
         if confusion_matrix_drawing:
             cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
@@ -897,7 +896,7 @@ class CMFit(ulog.Loggable):
         y_dl_l8s2_fl = y_dl_l8s2.flatten()
         y_true_fl = y_true.flatten()
         unique_true = np.unique(y_true_fl)
-        file_acc = open(self.plots_path + "/accuracies_dl_l8s2.txt", "w")
+        file_acc_dl = open(self.plots_path + "/accuracies_dl_l8s2.txt", "w")
         self.log.info("Unique dl_l8s2 {}".format(np.unique(y_dl_l8s2_fl)))
         self.log.info("F1 dl_l8s2 {}".format(f1_dl_l8s2))
         f1_dic, precision, recall, accuracies = {}, {}, {}, {}
@@ -905,7 +904,7 @@ class CMFit(ulog.Loggable):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
             rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
-            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1, file_acc), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1, file_acc_dl), 2)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
@@ -913,7 +912,7 @@ class CMFit(ulog.Loggable):
             self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
         self.log.info("dl_l8s2 {}".format(f1_dic))
         self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
-        file_acc.close()
+        file_acc_dl.close()
         file.write("dl_l8s2 F1: " + str(f1_dic) + "\n")
         file.write("dl_l8s2 Precision: " + str(precision) + "\n")
         file.write("dl_l8s2 Recall: " + str(recall) + "\n")
