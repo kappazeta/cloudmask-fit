@@ -920,15 +920,14 @@ class CMFit(ulog.Loggable):
         file.write("dl_l8s2 Accuracy: " + str(accuracies) + "\n")
         file.close()
 
-        if confusion_matrix_drawing:
-            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
-                                                                                        self.classes)
-            self.log.info(cm_normalize)
-            plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
-                                  "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
-                                  normalized=True, smaller=True)
-            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
-            plt.close()
+        cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_dl_l8s2_fl,
+                                                                                    self.classes)
+        self.log.info(cm_normalize)
+        plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
+                              "Test confusion matrix for dl_l8s2, dice score: " + str(f1_dl_l8s2),
+                              normalized=True, smaller=True)
+        plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_dl_l8s2.png'))
+        plt.close()
 
         return
 
