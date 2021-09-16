@@ -430,6 +430,7 @@ class DataGenerator(Sequence):
             if os.path.isfile(file) and file.endswith('.nc'):
                 with nc.Dataset(file, 'r') as root:
                     try:
+                        print(root)
                         dl_l8s2 = np.asarray(root["DL-L8S2-UV"])
                         y[i] = np_utils.to_categorical(dl_l8s2, self.num_classes)
 
