@@ -429,7 +429,7 @@ class DataGenerator(Sequence):
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
                 # TODO: the replacement coming because the path is different in split configuration file.
-                #  Either create a mode to read from other path or reconfigure splitting file 
+                #  Either create a mode to read from other path or reconfigure splitting file
                 file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
                 with nc.Dataset(file, 'r') as root:
                     try:
