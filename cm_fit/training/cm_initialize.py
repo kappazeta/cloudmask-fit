@@ -687,7 +687,6 @@ class CMFit(ulog.Loggable):
         test_generator.set_normalization_file(self.meta_data_path)
         test_generator.get_labels(dictionary['test'], self.test_path, self.classes)
 
-        """
         predictions = self.model.predict(test_generator)
         y_pred = np.argmax(predictions, axis=3)
         classes = test_generator.get_classes()
@@ -732,8 +731,6 @@ class CMFit(ulog.Loggable):
 
             for i, prediction in enumerate(predictions):
                 self.save_masks_contrast(dictionary['test'][i], prediction, y_pred[i], self.test_path)
-                
-        """
 
         """for i, matrix in enumerate(cm_multi_norm):
             plt.figure()
@@ -741,8 +738,6 @@ class CMFit(ulog.Loggable):
                                   self.experiment_name + ": cf_matrix " + self.classes[i], normalized=True)
             plt.savefig(os.path.join(self.plots_path, 'cf_matrix_' + self.classes[i] + '_test.png'))
             plt.close()"""
-
-        """
 
         sen2cor = test_generator.get_sen2cor(self.test_path)
         y_sen2cor = np.argmax(sen2cor, axis=3)
@@ -894,8 +889,7 @@ class CMFit(ulog.Loggable):
                                   normalized=True, smaller=True)
             plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
             plt.close()
-            
-        """
+
         file = open(self.plots_path + "/metrics_dl_l8s2.txt", "w")
         classes = test_generator.get_classes()
         y_true = np.argmax(classes, axis=3)
