@@ -428,6 +428,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
+                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
                 with nc.Dataset(file, 'r') as root:
                     try:
                         print(root)
