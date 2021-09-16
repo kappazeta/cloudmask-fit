@@ -423,6 +423,28 @@ class DataGenerator(Sequence):
                         print("Fmask for confusion " + file + " not found")
         return y
 
+    def get_dl_l8s2(self, store_path):
+        y = np.zeros((len(self.list_indices), self.dim[0], self.dim[1], self.num_classes), dtype=np.float32)
+        # Initialization
+        for i, file in enumerate(self.list_indices):
+            if os.path.isfile(file) and file.endswith('.nc'):
+                with nc.Dataset(file, 'r') as root:
+                    try:
+                        dl_l8s2 = np.asarray(root["DL-L8S2-UV"])
+                        y[i] = np_utils.to_categorical(dl_l8s2, self.num_classes)
+
+                        dl_l8s2 = dl_l8s2 * 63 + 3
+                        dl_l8s2[dl_l8s2 > 255] = 20
+
+                        dl_l8s2 = dl_l8s2.astype(np.uint8)
+                        # skio.imsave(saving_path + "/" + filename_image + "/prediction.png", classification)
+                        im = Image.fromarray(dl_l8s2)
+                        file_name = file.split(".")[0].split("/")[-1]
+                        im.save(store_path + "/" + file_name + "/dl_l8s2.png")
+                    except:
+                        print("dl_l8s2 for confusion " + file + " not found")
+        return y
+
 
 class TestDataGenerator(keras.utils.Sequence):
     def __init__(self, list_indices, path_input, batch_size, features, dim, shuffle=False):

@@ -891,6 +891,45 @@ class CMFit(ulog.Loggable):
             plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
             plt.close()
 
+        dl_l8s2 = test_generator.get_dl_l8s2(self.test_path)
+        y_dl_l8s2 = np.argmax(dl_l8s2, axis=3)
+        f1_dl_l8s2 = np.round(self.set_batches_f1(classes, dl_l8s2, 1), 2)
+        y_dl_l8s2_fl = y_dl_l8s2.flatten()
+        y_true_fl = y_true.flatten()
+        unique_true = np.unique(y_true_fl)
+        file_acc = open(self.plots_path + "/accuracies_dl_l8s2.txt", "w")
+        self.log.info("Unique dl_l8s2 {}".format(np.unique(y_dl_l8s2_fl)))
+        self.log.info("F1 dl_l8s2 {}".format(f1_dl_l8s2))
+        f1_dic, precision, recall, accuracies = {}, {}, {}, {}
+        for i, label in enumerate(unique_true):
+            f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
+            prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1, file_acc), 2)
+            f1_dic[label] = f1_curr
+            precision[label] = prec_curr
+            recall[label] = rec_curr
+            accuracies[label] = acc_curr
+            self.log.info("{}, {}, {}, {}".format(f1_curr, prec_curr, rec_curr, acc_curr))
+        self.log.info("dl_l8s2 {}".format(f1_dic))
+        self.log.info("precision {} and recall {} and accuracy {}".format(precision, recall, accuracies))
+        file_acc.close()
+        file.write("dl_l8s2 F1: " + str(f1_dic) + "\n")
+        file.write("dl_l8s2 Precision: " + str(precision) + "\n")
+        file.write("dl_l8s2 Recall: " + str(recall) + "\n")
+        file.write("dl_l8s2 Accuracy: " + str(accuracies) + "\n")
+        file.close()
+
+        if confusion_matrix_drawing:
+            cm, cm_normalize, cm_multi, cm_multi_norm = self.model.get_confusion_matrix(y_true_fl, y_maja_fl,
+                                                                                        self.classes)
+            self.log.info(cm_normalize)
+            plot_confusion_matrix(cm_normalize[1:-1, 1:-1], self.classes[1:-1],
+                                  "Test confusion matrix for MAJA, dice score: " + str(f1_maja),
+                                  normalized=True, smaller=True)
+            plt.savefig(os.path.join(self.plots_path, 'test_confusion_matrix_maja.png'))
+            plt.close()
+
         return
 
     def dataset_comparison(self, path_weights):
