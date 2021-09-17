@@ -295,7 +295,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(list_indices_temp):
             if os.path.isfile(file) and file.endswith('.nc'):
-                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
+                file = file.replace('merged_l1c_1507', 'kappamask_maja_update')
                 filename = file.split("/")[-1]
                 filename_sub = filename.split("_")
                 filename_sub = filename_sub[0] + "_" + filename_sub[1]
@@ -330,7 +330,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
-                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
+                file = file.replace('merged_l1c_1507', 'kappamask_maja_update')
                 with nc.Dataset(file, 'r') as root:
                     try:
                         label = np.asarray(root[self.label_set])
@@ -344,7 +344,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
-                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
+                file = file.replace('merged_l1c_1507', 'kappamask_maja_update')
                 with nc.Dataset(file, 'r') as root:
                     try:
                         sen2cor = np.asarray(root["SCL"])
@@ -369,7 +369,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
-                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
+                file = file.replace('merged_l1c_1507', 'kappamask_maja_update')
                 with nc.Dataset(file, 'r') as root:
                     try:
                         ss2c = np.asarray(root["SS2C"])
@@ -392,7 +392,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
-                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
+                file = file.replace('merged_l1c_1507', 'kappamask_maja_update')
                 with nc.Dataset(file, 'r') as root:
                     try:
                         maja = np.asarray(root["MAJAC"])
@@ -415,7 +415,7 @@ class DataGenerator(Sequence):
         # Initialization
         for i, file in enumerate(self.list_indices):
             if os.path.isfile(file) and file.endswith('.nc'):
-                file = file.replace('merged_l1c_1507', 'kappamask_test_dl')
+                file = file.replace('merged_l1c_1507', 'kappamask_maja_update')
                 with nc.Dataset(file, 'r') as root:
                     try:
                         fmask = np.asarray(root["FMC"])
