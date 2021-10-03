@@ -906,8 +906,8 @@ class CMFit(ulog.Loggable):
         for i, label in enumerate(unique_true):
             f1_curr = np.round(self.set_batches_f1(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
             prec_curr = np.round(self.set_batches_precision(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
-            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 2)
-            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1, file_acc_dl), 2)
+            rec_curr = np.round(self.set_batches_recall(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1), 4)
+            acc_curr = np.round(self.set_batches_accuracy(classes[:, :, :, label], dl_l8s2[:, :, :, label], 1, file_acc_dl), 4)
             f1_dic[label] = f1_curr
             precision[label] = prec_curr
             recall[label] = rec_curr
